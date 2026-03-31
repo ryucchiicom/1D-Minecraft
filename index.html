@@ -71,6 +71,7 @@
   .cell.gold_ore{background:linear-gradient(180deg,#d8b24c,#a97f1f);color:#1a1d24}
   .cell.diamond_ore{background:linear-gradient(180deg,#57d8e6,#2ea8bb);color:#0d1416}
   .cell.sand{background:linear-gradient(180deg,#f4e2a0,#ccb869);color:#201800}
+  .cell.gravel{background:linear-gradient(180deg,#a7acb4,#7e858f);color:#16191f}
   .cell.obsidian{background:linear-gradient(180deg,#42385f,#241e35);color:#f2f0ff}
   .cell.netherrack{background:linear-gradient(180deg,#8a2f2f,#5d1919);color:#ffe5e5}
   .cell.soul_sand{background:linear-gradient(180deg,#6d5a45,#4d3d2d);color:#f1debc}
@@ -83,6 +84,7 @@
   .cell.crafting_table{background:linear-gradient(180deg,#b5875a,#8b5b34)}
   .cell.furnace{background:linear-gradient(180deg,#818896,#5f6674)}
   .cell.flint{background:linear-gradient(180deg,#7d828d,#50545e);color:#101216}
+  .cell.coal{background:linear-gradient(180deg,#44484f,#24272d);color:#f2f2f2}
   .cell.gunpowder{background:linear-gradient(180deg,#8d8f96,#5e6169);color:#0f1114}
   .cell.air_item,.cell.bucket,.cell.water_bucket,.cell.lava_bucket,.cell.flint_and_steel,.cell.tnt,.cell.nether_portal{
     background:linear-gradient(180deg,#4f586e,#2b3243)
@@ -105,6 +107,14 @@
   .cell.grave{
     outline:3px solid #ff7d7d!important;
     box-shadow:0 0 0 3px rgba(255,125,125,.15),0 0 18px rgba(255,125,125,.35)
+  }
+  .tex{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    pointer-events:none;
   }
   .playerMark{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -415,8 +425,8 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const SAVE_KEY = 'oneDmc_saves_v10';
-  const GLOBAL_KEY = 'oneDmc_global_v10';
+  const SAVE_KEY = 'oneDmc_saves_v11';
+  const GLOBAL_KEY = 'oneDmc_global_v11';
   const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
   const PASSABLE = new Set(['empty','water','lava','fire','nether_portal']);
 
@@ -487,10 +497,10 @@
     air_item:{name:'空気',icon:'·'},
 
     dirt:{name:'土',icon:'■'}, grass:{name:'草',icon:'■'}, wood:{name:'木',icon:'■'}, leaf:{name:'葉',icon:'■'},
-    stone:{name:'石',icon:'■'}, cobblestone:{name:'丸石',icon:'■'},
+    stone:{name:'石',icon:'■'}, cobblestone:{name:'丸石',icon:'■'}, gravel:{name:'砂利',icon:'░'},
 
     coal_ore:{name:'石炭鉱石',icon:'■'}, iron_ore:{name:'鉄鉱石',icon:'■'}, gold_ore:{name:'金鉱石',icon:'■'}, diamond_ore:{name:'ダイヤ鉱石',icon:'◆'},
-    sand:{name:'砂',icon:'▒'}, obsidian:{name:'黒曜石',icon:'⬛'},
+    sand:{name:'砂',icon:'▒'}, coal:{name:'石炭',icon:'●'}, obsidian:{name:'黒曜石',icon:'⬛'},
     netherrack:{name:'ネザーラック',icon:'▤'}, soul_sand:{name:'ソウルサンド',icon:'▧'}, ancient_debris:{name:'古代の残骸',icon:'◈'},
 
     water:{name:'水',icon:'≈'}, lava:{name:'溶岩',icon:'≋'},
@@ -511,7 +521,7 @@
   };
 
   const ITEM_ORDER = [
-    'air_item','wood','plank','stick','sand','flint','gunpowder',
+    'air_item','wood','plank','stick','sand','gravel','flint','coal','gunpowder',
     'cobblestone','raw_iron','raw_gold','iron_ingot','gold_ingot','diamond',
     'obsidian','netherrack','soul_sand','ancient_debris','water','lava',
     'bucket','water_bucket','lava_bucket','flint_and_steel','tnt','nether_portal',
@@ -531,9 +541,44 @@
   ]);
   const CRAFT_INPUTS = new Set([
     'wood','plank','stick','sand','flint','gunpowder','cobblestone',
-    'raw_iron','raw_gold','iron_ingot','gold_ingot','diamond',
+    'raw_iron','raw_gold','iron_ingot','gold_ingot','diamond','coal',
     'obsidian','netherrack','soul_sand','ancient_debris','bucket','water_bucket','lava_bucket','flint_and_steel'
   ]);
+
+  const TEXTURE_DIR = 'textures/';
+  const TEXTURE_EXTS = ['png', 'webp', 'jpg', 'jpeg'];
+  const TEXTURE_MAP = Object.create(null);
+
+  function preloadTextures(){
+    for (const id of Object.keys(BLOCKS)){
+      if (id === 'empty') continue;
+      const names = [...new Set([id, BLOCKS[id]?.name].filter(Boolean))];
+      const candidates = [];
+      for (const name of names){
+        for (const ext of TEXTURE_EXTS){
+          candidates.push(encodeURI(`${TEXTURE_DIR}${name}.${ext}`));
+        }
+      }
+      let i = 0;
+      const tryNext = () => {
+        if (i >= candidates.length){
+          TEXTURE_MAP[id] = null;
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          TEXTURE_MAP[id] = img.src;
+          render();
+        };
+        img.onerror = () => {
+          i++;
+          tryNext();
+        };
+        img.src = candidates[i];
+      };
+      tryNext();
+    }
+  }
 
   function toolOutId(prefix,suffix){ return prefix==='wood' ? `wooden_${suffix}` : `${prefix}_${suffix}`; }
 
@@ -807,15 +852,16 @@
     const t = normText(token);
     const map = {
       air:'empty', empty:'empty', 空気:'empty', 無:'empty',
-      土:'dirt', 草:'grass', 木:'wood', 葉:'leaf', 石:'stone', 丸石:'cobblestone',
+      土:'dirt', 草:'grass', 木:'wood', 葉:'leaf', 石:'stone', 丸石:'cobblestone', 砂利:'gravel',
       砂:'sand', 黒曜石:'obsidian', ネザーラック:'netherrack', ソウルサンド:'soul_sand', 古代の残骸:'ancient_debris',
       水:'water', 溶岩:'lava', 石炭鉱石:'coal_ore', 鉄鉱石:'iron_ore', 金鉱石:'gold_ore', ダイヤ鉱石:'diamond_ore',
+      石炭:'coal',
       板材:'plank', 棒:'stick', たいまつ:'torch', 作業台:'crafting_table', かまど:'furnace',
       鉄の原石:'raw_iron', 金の原石:'raw_gold', 鉄インゴット:'iron_ingot', 金インゴット:'gold_ingot',
       火打石:'flint', 火薬:'gunpowder', バケツ:'bucket', 水入りバケツ:'water_bucket', 溶岩入りバケツ:'lava_bucket',
       火打石と打ち金:'flint_and_steel', TNT:'tnt', ネザーゲートブロック:'nether_portal',
       stone:'stone', dirt:'dirt', grass:'grass', wood:'wood', leaf:'leaf', plank:'plank', stick:'stick',
-      torch:'torch', crafting_table:'crafting_table', furnace:'furnace', sand:'sand',
+      torch:'torch', crafting_table:'crafting_table', furnace:'furnace', sand:'sand', gravel:'gravel', coal:'coal',
       obsidian:'obsidian', netherrack:'netherrack', soul_sand:'soul_sand', ancient_debris:'ancient_debris',
       water:'water', lava:'lava', raw_iron:'raw_iron', raw_gold:'raw_gold', iron_ingot:'iron_ingot', gold_ingot:'gold_ingot',
       diamond:'diamond', flint:'flint', gunpowder:'gunpowder', bucket:'bucket',
@@ -830,6 +876,8 @@
     const map = {
       空気:'air_item', air:'air_item', air_item:'air_item',
       石炭鉱石:'coal_ore', 鉄鉱石:'iron_ore', 金鉱石:'gold_ore', ダイヤ鉱石:'diamond_ore',
+      石炭:'coal',
+      砂利:'gravel',
       鉄の原石:'raw_iron', 金の原石:'raw_gold', 鉄インゴット:'iron_ingot', 金インゴット:'gold_ingot',
       木の剣:'wooden_sword', 石の剣:'stone_sword', 鉄の剣:'iron_sword', 金の剣:'gold_sword', ダイヤの剣:'diamond_sword',
       木の斧:'wooden_axe', 石の斧:'stone_axe', 鉄の斧:'iron_axe', 金の斧:'gold_axe', ダイヤの斧:'diamond_axe',
@@ -838,7 +886,7 @@
       woodalltools:'wood_alltools', stonealltools:'stone_alltools', ironalltools:'iron_alltools', goldalltools:'gold_alltools', diamondalltools:'diamond_alltools',
       wood_alltools:'wood_alltools', stone_alltools:'stone_alltools', iron_alltools:'iron_alltools', gold_alltools:'gold_alltools', diamond_alltools:'diamond_alltools',
       'wood all tools':'wood_alltools', 'stone all tools':'stone_alltools', 'iron all tools':'iron_alltools', 'gold all tools':'gold_alltools', 'diamond all tools':'diamond_alltools',
-      wood:'wood', plank:'plank', stick:'stick', sand:'sand', flint:'flint', gunpowder:'gunpowder',
+      wood:'wood', plank:'plank', stick:'stick', sand:'sand', gravel:'gravel', flint:'flint', gunpowder:'gunpowder',
       cobblestone:'cobblestone', coal:'coal', diamond:'diamond', dirt:'dirt', grass:'grass', leaf:'leaf',
       crafting_table:'crafting_table', furnace:'furnace', torch:'torch', obsidian:'obsidian', netherrack:'netherrack', soul_sand:'soul_sand', ancient_debris:'ancient_debris',
       water:'water', lava:'lava', bucket:'bucket', water_bucket:'water_bucket', lava_bucket:'lava_bucket', flint_and_steel:'flint_and_steel', tnt:'tnt', nether_portal:'nether_portal',
@@ -1532,14 +1580,14 @@
     if(!text) return;
     if(!state.cmdUnlocked){ setMsg('コマンドはロック中。'); return; }
     const parts = text.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
+    const cmd = parts[0].replace(/^\/+/, '').toLowerCase();
 
-    if(cmd === '/keepinventory'){
+    if(cmd === 'keepinventory'){
       state.keepInventory = !state.keepInventory;
       setMsg(`keepinventory = ${state.keepInventory ? 'ON' : 'OFF'}`);
       return;
     }
-    if(cmd === '/tp'){
+    if(cmd === 'tp'){
       const a = parseInt(parts[1],10);
       if(Number.isNaN(a)){ setMsg('使い方: /tp 〈x座標〉 [y座標]'); return; }
       if(parts.length >= 3){
@@ -1552,8 +1600,8 @@
       }
       state.portalAcc = 0; setMsg(`/tp ${parts.slice(1).join(' ')}`); render(); return;
     }
-    if(cmd === '/time'){ setTimeCommand(parts[1]); return; }
-    if(cmd === '/dim'){
+    if(cmd === 'time'){ setTimeCommand(parts[1]); return; }
+    if(cmd === 'dim'){
       if(!parts[1]){ travelTo(state.dim === DIM.OVERWORLD ? DIM.NETHER : DIM.OVERWORLD); return; }
       const t = (parts[1] || '').toLowerCase();
       if(t === 'overworld' || t === 'ow') travelTo(DIM.OVERWORLD);
@@ -1562,8 +1610,8 @@
       return;
     }
 
-    if(cmd === '/give'){
-      const body = text.slice(5).trim();
+    if(cmd === 'give'){
+      const body = text.replace(/^\/+give\s+/i, '').trim();
       if(!body){ setMsg('使い方: /give 〈アイテム名〉 〈個数〉'); return; }
       const toks = body.split(/\s+/);
       let qtyToken = '1';
@@ -1594,7 +1642,7 @@
       return;
     }
 
-    if(cmd === '/spawn'){
+    if(cmd === 'spawn'){
       const type = mobAlias(parts[1] || '');
       const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
       if(!type){ setMsg('使い方: /spawn 〈モブ名〉 〈数〉'); return; }
@@ -1604,7 +1652,7 @@
       return;
     }
 
-    if(cmd === '/setblock'){
+    if(cmd === 'setblock'){
       const token = blockAlias(parts[1] || '');
       const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
       const p = currentPos();
@@ -1617,7 +1665,7 @@
       return;
     }
 
-    if(cmd === '/fill'){
+    if(cmd === 'fill'){
       const token = blockAlias(parts[1] || '');
       const a = parseInt(parts[2],10);
       const b = parseInt(parts[3],10);
@@ -1678,17 +1726,36 @@
   }
 
   function mineSpecialCobbleLike(block, tool, dim, x, y){
-    if(block === 'stone' && isShovelLike(tool)){
-      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
-      setBlockAt(dim,x,y,'empty');
-      addItem('cobblestone',1);
-      return { ok:true, mined:true, drop:'cobblestone', msg:'丸石を手に入れた。' };
-    }
     if(block === 'cobblestone' && isShovelLike(tool)){
-      setBlockAt(dim,x,y,'empty');
-      if(Math.random() < 1/16) addItem('gravel',1);
-      return { ok:true, mined:true, drop:'gravel', msg:'砂利が出た。' };
+      if(Math.random() > 1/16) {
+        return { ok:false, mined:false, msg:'空振りした。' };
+      }
+
+      setBlockAt(dim, x, y, 'empty');
+
+      if(Math.random() < 1/16){
+        addItem('gravel', 1);
+        return { ok:true, mined:true, drop:'gravel', msg:'砂利を手に入れた。' };
+      }
+
+      return { ok:true, mined:true, drop:null, msg:'丸石を砕いた。砂利は出なかった。' };
     }
+
+    if(block === 'gravel' && isShovelLike(tool)){
+      if(Math.random() > 1/16) {
+        return { ok:false, mined:false, msg:'空振りした。' };
+      }
+
+      setBlockAt(dim, x, y, 'empty');
+
+      if(Math.random() < 1/16){
+        addItem('flint', 1);
+        return { ok:true, mined:true, drop:'flint', msg:'火打石を手に入れた。' };
+      }
+
+      return { ok:true, mined:true, drop:null, msg:'砂利を砕いた。火打石は出なかった。' };
+    }
+
     return null;
   }
 
@@ -1711,9 +1778,22 @@
     if(block === 'water' || block === 'lava') return 0;
     if(block === 'fire') return 1;
 
-    if(block === 'stone' || block === 'cobblestone'){
+    if(block === 'stone'){
       if(type === 'none') return 1/16;
-      if(!isPickLike(item) && !isShovelLike(item)) return 0;
+      if(!isPickLike(item)) return 0;
+      return baseMineRate(mat);
+    }
+
+    if(block === 'cobblestone'){
+      if(type === 'none') return 1/16;
+      if(isShovelLike(item)) return 1/16;
+      if(!isPickLike(item)) return 0;
+      return baseMineRate(mat);
+    }
+
+    if(block === 'gravel'){
+      if(type === 'none') return 1/16;
+      if(!isShovelLike(item)) return 0;
       return baseMineRate(mat);
     }
 
@@ -1809,15 +1889,16 @@
       setBlockAt(dim,x,y,'empty');
       return { ok:true, mined:true, msg:'石を砕いた。' };
     }
-    if(block === 'cobblestone' || block === 'gravel' || block === 'stone'){
-      const sp = mineSpecialCobbleLike(block,tool,dim,x,y);
-      if(sp) return sp;
-    }
+
+    const special = mineSpecialCobbleLike(block, tool, dim, x, y);
+    if(special) return special;
+
     if(block === 'tnt'){
       setBlockAt(dim,x,y,'empty');
       addItem('tnt',1);
       return { ok:true, mined:true, drop:'tnt', msg:'TNTを手に入れた。' };
     }
+
     if(block === 'obsidian' && !forceAll){
       const chance = miningChance(block,tool,inWater);
       if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
@@ -2186,14 +2267,24 @@
       const block = getBlockAt(state.dim,x,y);
       const cell = document.createElement('div');
       cell.className = 'cell ' + block;
+      cell.innerHTML = '';
 
-      if(block === 'fire'){
-        cell.textContent = ((Math.floor((w.fire.get(`${x},${y}`) || 0) * 8) % 2 === 0) ? '🔥' : '✦');
-      }else if(block === 'tnt'){
-        const info = normalizeTntValue(w.tnt.get(`${x},${y}`));
-        cell.textContent = info.lit ? (Math.floor(info.age * 10) % 2 === 0 ? '💣' : 'T') : 'T';
+      const tex = TEXTURE_MAP[block];
+      if(tex){
+        const img = document.createElement('img');
+        img.className = 'tex';
+        img.src = tex;
+        img.alt = '';
+        cell.appendChild(img);
       }else{
-        cell.textContent = BLOCKS[block]?.icon || '';
+        if(block === 'fire'){
+          cell.textContent = ((Math.floor((w.fire.get(`${x},${y}`) || 0) * 8) % 2 === 0) ? '🔥' : '✦');
+        }else if(block === 'tnt'){
+          const info = normalizeTntValue(w.tnt.get(`${x},${y}`));
+          cell.textContent = info.lit ? (Math.floor(info.age * 10) % 2 === 0 ? '💣' : 'T') : 'T';
+        }else{
+          cell.textContent = BLOCKS[block]?.icon || '';
+        }
       }
 
       if(x === currentTarget().x && y === currentTarget().y) cell.classList.add('frontTarget');
@@ -2541,6 +2632,7 @@
   function init(){
     buildSpawnArea();
     ensureSpawnResources();
+    preloadTextures();
     updateLayout();
     updateTheme();
     if(saves.length > 0){ startFreshWorld(); openWorldListPanel(); }
