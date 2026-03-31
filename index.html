@@ -1,0 +1,2713 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>1D Minecraft</title>
+<style>
+  :root{
+    --text:#eef2ff;
+    --muted:#aab3cf;
+    --accent:#7dd3fc;
+    --good:#9ef0b6;
+    --danger:#ffb4b4;
+    --cell-size:48px;
+    --gap:4px;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;width:100%;height:100%;overflow:hidden;
+    color:var(--text);
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    touch-action:none;
+    background:linear-gradient(#171b25,#0f1218);
+    transition:background .25s ease;
+  }
+  button,input{font:inherit}
+  #app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto}
+  header{
+    padding:8px 10px 6px;background:rgba(0,0,0,.16);
+    border-bottom:1px solid rgba(255,255,255,.08)
+  }
+  .title{font-size:16px;font-weight:800}
+  .sub{margin-top:2px;font-size:12px;color:var(--muted);line-height:1.35}
+  #gameArea{
+    position:relative;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden
+  }
+  #hud{
+    position:absolute;left:8px;top:8px;right:8px;
+    display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+    gap:8px;pointer-events:none;z-index:2
+  }
+  .hudBox{
+    background:rgba(28,33,46,.82);border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;padding:8px 10px;backdrop-filter:blur(6px);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);min-width:0
+  }
+  .hudLabel{font-size:11px;color:var(--muted)}
+  .hudValue{
+    margin-top:3px;font-size:13px;font-weight:700;max-width:100%;
+    white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;
+    word-break:break-word
+  }
+  .dirStrong{color:var(--accent);font-weight:900;font-size:14px}
+  #line{
+    display:flex;align-items:center;gap:var(--gap);width:max-content;padding:8px 6px;z-index:1
+  }
+  .cell{
+    width:var(--cell-size);height:var(--cell-size);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;position:relative;
+    font-size:clamp(18px,5vw,28px);font-weight:800;user-select:none;flex:0 0 auto;
+    border:1px solid rgba(255,255,255,.08);background:#1a1f2a;overflow:hidden
+  }
+  .cell.empty{background:linear-gradient(180deg,#171b24,#121620);color:#8d96b3}
+  .cell.dirt{background:linear-gradient(180deg,#8a5a3d,#734a31)}
+  .cell.grass{background:linear-gradient(180deg,#4caf50,#388e3c)}
+  .cell.wood{background:linear-gradient(180deg,#8d6e63,#6d4c41)}
+  .cell.leaf{background:linear-gradient(180deg,#66bb6a,#43a047)}
+  .cell.stone{background:linear-gradient(180deg,#9aa0aa,#7f8590);color:#15181f}
+  .cell.coal_ore{background:linear-gradient(180deg,#30343d,#22262d)}
+  .cell.iron_ore{background:linear-gradient(180deg,#8b949f,#666e7a);color:#f3ede2}
+  .cell.gold_ore{background:linear-gradient(180deg,#d8b24c,#a97f1f);color:#1a1d24}
+  .cell.diamond_ore{background:linear-gradient(180deg,#57d8e6,#2ea8bb);color:#0d1416}
+  .cell.sand{background:linear-gradient(180deg,#f4e2a0,#ccb869);color:#201800}
+  .cell.obsidian{background:linear-gradient(180deg,#42385f,#241e35);color:#f2f0ff}
+  .cell.netherrack{background:linear-gradient(180deg,#8a2f2f,#5d1919);color:#ffe5e5}
+  .cell.soul_sand{background:linear-gradient(180deg,#6d5a45,#4d3d2d);color:#f1debc}
+  .cell.ancient_debris{background:linear-gradient(180deg,#5f4a32,#302116);color:#f4e0b4}
+  .cell.water{background:linear-gradient(180deg,#6cc8ff,#3a8ee6);color:#07131f}
+  .cell.lava{background:linear-gradient(180deg,#ff9f3d,#d55a11);color:#2a1000}
+  .cell.plank{background:linear-gradient(180deg,#c89c6c,#a87747);color:#1b140d}
+  .cell.stick{background:linear-gradient(180deg,#b98a5a,#8f623d);color:#1b140d}
+  .cell.torch{background:linear-gradient(180deg,#ffd97a,#ffbf47);color:#372400}
+  .cell.crafting_table{background:linear-gradient(180deg,#b5875a,#8b5b34)}
+  .cell.furnace{background:linear-gradient(180deg,#818896,#5f6674)}
+  .cell.flint{background:linear-gradient(180deg,#7d828d,#50545e);color:#101216}
+  .cell.gunpowder{background:linear-gradient(180deg,#8d8f96,#5e6169);color:#0f1114}
+  .cell.air_item,.cell.bucket,.cell.water_bucket,.cell.lava_bucket,.cell.flint_and_steel,.cell.tnt,.cell.nether_portal{
+    background:linear-gradient(180deg,#4f586e,#2b3243)
+  }
+  .cell.wooden_pickaxe,.cell.stone_pickaxe,.cell.iron_pickaxe,.cell.gold_pickaxe,.cell.diamond_pickaxe,
+  .cell.wooden_axe,.cell.stone_axe,.cell.iron_axe,.cell.gold_axe,.cell.diamond_axe,
+  .cell.wooden_shovel,.cell.stone_shovel,.cell.iron_shovel,.cell.gold_shovel,.cell.diamond_shovel,
+  .cell.wooden_sword,.cell.stone_sword,.cell.iron_sword,.cell.gold_sword,.cell.diamond_sword,
+  .cell.wood_alltools,.cell.stone_alltools,.cell.iron_alltools,.cell.gold_alltools,.cell.diamond_alltools{
+    background:linear-gradient(180deg,#4f586e,#2b3243)
+  }
+  .cell.player{
+    outline:3px solid var(--accent);
+    box-shadow:0 0 0 3px rgba(125,211,252,.12),0 0 16px rgba(125,211,252,.18)
+  }
+  .cell.frontTarget{
+    outline:2px solid rgba(255,231,168,.95);
+    box-shadow:0 0 0 3px rgba(255,231,168,.14)
+  }
+  .cell.grave{
+    outline:3px solid #ff7d7d!important;
+    box-shadow:0 0 0 3px rgba(255,125,125,.15),0 0 18px rgba(255,125,125,.35)
+  }
+  .playerMark{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:24px;pointer-events:none
+  }
+  .faceBadge{
+    position:absolute;top:3px;right:4px;font-size:13px;line-height:1;padding:2px 4px;
+    border-radius:999px;background:rgba(0,0,0,.28);color:#fff;pointer-events:none
+  }
+  .graveBadge{
+    position:absolute;left:4px;bottom:3px;font-size:12px;font-weight:900;padding:1px 4px;
+    border-radius:999px;background:rgba(0,0,0,.32);color:#ffb0b0;pointer-events:none
+  }
+  #controls{
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:8px;
+    background:rgba(0,0,0,.18);border-top:1px solid rgba(255,255,255,.08);z-index:3
+  }
+  .ctrl{
+    appearance:none;border:0;border-radius:14px;padding:12px 4px;
+    font-size:clamp(10px,2.6vw,13px);font-weight:800;color:var(--text);
+    background:linear-gradient(180deg,#394058,#252b3b);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 15px rgba(0,0,0,.22);
+    min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  }
+  .ctrl:active{transform:translateY(1px);filter:brightness(1.07)}
+  #invOverlay,#worldOverlay,#confirmOverlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;
+    z-index:1000;pointer-events:auto
+  }
+  #invOverlay.open,#worldOverlay.open,#confirmOverlay.open{display:flex}
+  #invPanel,#worldPanel{
+    width:min(980px,100vw);max-height:min(86vh,820px);background:rgba(24,28,40,.98);
+    border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 -18px 40px rgba(0,0,0,.35);overflow:hidden;display:grid;grid-template-rows:auto 1fr;pointer-events:auto
+  }
+  #worldPanel{max-height:min(90vh,860px);border-radius:18px;width:min(1100px, calc(100vw - 16px))}
+  .panelHeader{
+    padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)
+  }
+  .panelClose{
+    appearance:none;border:0;border-radius:12px;background:linear-gradient(180deg,#4e586f,#2c3346);
+    color:#fff;padding:9px 12px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)
+  }
+  #tabContent,#worldContent{min-height:0;overflow:auto;padding:12px;display:grid;gap:12px}
+  .section{
+    padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)
+  }
+  .section h3{margin:0 0 8px 0;font-size:14px}
+  .small{color:var(--muted);font-size:12px;line-height:1.45;margin-bottom:10px}
+  .searchRow{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+  #invSearch,#cmdInput{
+    width:100%;min-width:0;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.2);color:var(--text);
+    border-radius:14px;padding:11px 12px;font-size:14px;outline:none
+  }
+  #invList,#cmdFavList{display:flex;flex-wrap:wrap;gap:8px}
+  .chip,.favCmd{
+    appearance:none;border:0;font-size:12px;border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08);white-space:nowrap;cursor:pointer;user-select:none;color:var(--text)
+  }
+  .chip.sel{
+    outline:2px solid var(--accent);background:rgba(125,211,252,.16)
+  }
+  .chip.sel.alltools{
+    outline:2px solid rgba(255,255,255,.95);border-color:rgba(255,255,255,.35);
+    background:linear-gradient(90deg,rgba(255,70,130,.98),rgba(255,210,50,.98),rgba(70,255,140,.98),rgba(40,205,255,.98),rgba(185,90,255,.98),rgba(255,70,130,.98));
+    background-size:380% 380%;animation:rainbowGlow 1.4s linear infinite;
+    box-shadow:0 0 0 1px rgba(255,255,255,.55),0 0 12px rgba(255,255,255,.32),0 0 28px rgba(0,210,255,.42),0 0 40px rgba(255,80,200,.28);
+    color:#fff;text-shadow:0 0 4px rgba(255,255,255,.95),0 0 10px rgba(255,255,255,.5);filter:saturate(1.8) brightness(1.18)
+  }
+  @keyframes rainbowGlow{
+    0%{background-position:0% 50%;filter:hue-rotate(0deg) saturate(1.9) brightness(1.18)}
+    25%{filter:hue-rotate(90deg) saturate(2.0) brightness(1.20)}
+    50%{background-position:100% 50%;filter:hue-rotate(180deg) saturate(2.05) brightness(1.22)}
+    75%{filter:hue-rotate(270deg) saturate(2.0) brightness(1.20)}
+    100%{background-position:0% 50%;filter:hue-rotate(360deg) saturate(1.9) brightness(1.18)}
+  }
+  .craftArea{display:grid;gap:10px}
+  .craftInfo{
+    padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+    font-size:13px;line-height:1.45
+  }
+  .craftGridWrap{display:inline-grid;gap:6px;padding:8px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+  .slot{
+    appearance:none;border:1px solid rgba(255,255,255,.12);width:54px;height:54px;border-radius:12px;background:linear-gradient(180deg,#161b27,#10131a);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;user-select:none;position:relative;cursor:pointer;color:var(--text)
+  }
+  .slot.has{background:linear-gradient(180deg,#263045,#1b2130)}
+  .slot small{position:absolute;bottom:3px;right:4px;font-size:9px;color:var(--muted)}
+  .craftBar{display:flex;gap:8px;flex-wrap:wrap}
+  .craftDo,.craftClear,.furnaceBtn,.cmdBtn,.cmdRun,.yesBtn,.noBtn,.saveBtn,.loadBtn,.miniBtn,.dangerBtn,.plainBtn{
+    appearance:none;border:0;border-radius:14px;padding:11px 14px;color:#fff;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)
+  }
+  .craftDo{background:linear-gradient(180deg,#4d6b52,#31483b)}
+  .craftClear{background:linear-gradient(180deg,#555b73,#313649)}
+  .furnaceBtn,.cmdRun,.saveBtn,.loadBtn,.miniBtn,.plainBtn,.cmdBtn{background:linear-gradient(180deg,#4e586f,#2c3346)}
+  .dangerBtn{background:linear-gradient(180deg,#7e3d3d,#532222)}
+  .yesBtn{background:linear-gradient(180deg,#4b6a51,#30483a)}
+  .noBtn{background:linear-gradient(180deg,#4e586f,#2c3346)}
+  .craftDo:disabled{opacity:.5;filter:saturate(.5)}
+  .furnaceBox{display:grid;gap:10px}
+  .furnaceGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .fSlot{
+    appearance:none;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:10px;min-height:92px;
+    background:rgba(255,255,255,.05);display:flex;flex-direction:column;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;color:var(--text)
+  }
+  .fSlotTop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;font-size:12px;color:var(--muted)}
+  .fSlotItem{
+    display:flex;align-items:center;justify-content:center;min-height:44px;font-size:13px;font-weight:800;border-radius:10px;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.06);text-align:center;padding:8px
+  }
+  .fSlotItem.has{background:rgba(125,211,252,.08);border-color:rgba(125,211,252,.16)}
+  .cmdBox{display:grid;gap:10px}
+  .cmdLocked{
+    padding:12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)
+  }
+  .cmdInputRow{display:grid;grid-template-columns:1fr auto;gap:8px}
+  #cmdInput:disabled{opacity:.5}
+  .cmdFavNote{color:var(--muted);font-size:11px;margin-top:8px}
+  #confirmBox{
+    width:min(560px, calc(100vw - 24px));border-radius:18px;background:#1a2030;border:1px solid rgba(255,255,255,.10);
+    padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)
+  }
+  #confirmText{font-size:14px;line-height:1.5;color:#eef2ff}
+  #confirmBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  #worldGrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .worldCard{
+    padding:12px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:grid;gap:10px
+  }
+  .worldThumb{
+    width:100%;aspect-ratio:16/9;border-radius:14px;background:linear-gradient(135deg,#344055,#1b2030);
+    border:1px solid rgba(255,255,255,.08);overflow:hidden;position:relative;display:flex;align-items:flex-end;justify-content:flex-start;padding:8px;color:#fff
+  }
+  .worldThumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .worldThumb .ph{position:relative;z-index:1;background:rgba(0,0,0,.3);padding:4px 8px;border-radius:999px;font-size:12px}
+  .worldName{font-size:15px;font-weight:900;line-height:1.25;word-break:break-word}
+  .worldMeta{font-size:12px;color:var(--muted);line-height:1.4}
+  .worldActions{display:flex;gap:8px;flex-wrap:wrap}
+  .worldHeaderRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .badge{
+    display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;color:var(--muted)
+  }
+  @media (min-width:900px){
+    :root{--cell-size:72px;--gap:6px}
+    .playerMark{font-size:28px}
+    .slot{width:60px;height:60px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title">1D Minecraft</div>
+    <div class="sub">時間・敵・液体・コマンドつき。地形は「1列ずつ」まとまりで生成する版。</div>
+  </header>
+  <div id="gameArea">
+    <div id="hud">
+      <div class="hudBox">
+        <div class="hudLabel">Position / Direction / Held / HP / Breath / Time</div>
+        <div class="hudValue" id="posText">Overworld x = 0</div>
+      </div>
+      <div class="hudBox">
+        <div class="hudLabel">Message</div>
+        <div class="hudValue" id="msgText">準備中</div>
+      </div>
+    </div>
+    <div id="line"></div>
+  </div>
+  <div id="controls">
+    <button class="ctrl" data-act="left">←</button>
+    <button class="ctrl" data-act="mine">掘る</button>
+    <button class="ctrl" data-act="place">置く</button>
+    <button class="ctrl" data-act="inventory">ｲﾝﾍﾞﾝﾄﾘ</button>
+    <button class="ctrl" data-act="right">→</button>
+  </div>
+</div>
+
+<div id="invOverlay" aria-hidden="true">
+  <div id="invPanel">
+    <div class="panelHeader">
+      <strong>インベントリ</strong>
+      <button class="panelClose" id="closeInv">閉じる</button>
+    </div>
+    <div id="tabContent">
+      <div class="section">
+        <h3>所持品</h3>
+        <div class="small">タップで手持ち変更。0.5秒長押しで固定。固定は上に並ぶ。</div>
+        <div class="searchRow">
+          <input id="invSearch" type="text" placeholder="所持品を検索" autocomplete="off" />
+          <button class="plainBtn" id="searchClearBtn">消す</button>
+        </div>
+        <div id="heldText" class="small"></div>
+        <div id="invList"></div>
+      </div>
+
+      <div class="section">
+        <h3>クラフト</h3>
+        <div class="small" id="craftModeText">現在: 2×2</div>
+        <div class="craftArea">
+          <div class="craftInfo">
+            <div><strong>クラフトスロット</strong></div>
+            <div class="small" style="margin:6px 0 8px">上の所持品から選んで、空スロットを押すと1個入る。スロットを押すと戻る。</div>
+            <div id="craftGridHolder"></div>
+          </div>
+          <div class="craftInfo">
+            <div><strong>結果</strong></div>
+            <div id="craftResultText" style="margin-top:6px;font-size:13px;line-height:1.45;">—</div>
+          </div>
+          <div class="craftBar">
+            <button class="craftDo" id="craftDo">クラフト</button>
+            <button class="craftClear" id="craftClear">全部消す</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="furnaceSection" style="display:none;">
+        <h3>かまど</h3>
+        <div class="small" id="furnaceInfo">かまどの前で使える。鉄の原石・金の原石・丸石を入れて、燃料を入れて、精錬する。</div>
+        <div class="furnaceBox">
+          <div class="furnaceGrid">
+            <button class="fSlot" data-fslot="input" type="button">
+              <div class="fSlotTop"><span>物を入れる</span><span id="fInputCount">0</span></div>
+              <div class="fSlotItem" id="fInputItem">空</div>
+            </button>
+            <button class="fSlot" data-fslot="fuel" type="button">
+              <div class="fSlotTop"><span>燃料</span><span id="fFuelCount">0</span></div>
+              <div class="fSlotItem" id="fFuelItem">空</div>
+            </button>
+            <button class="fSlot" data-fslot="output" type="button">
+              <div class="fSlotTop"><span>できあがり</span><span id="fOutCount">0</span></div>
+              <div class="fSlotItem" id="fOutItem">空</div>
+            </button>
+          </div>
+          <button class="furnaceBtn" id="smeltBtn">精錬</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>コマンド</h3>
+        <div class="cmdBox">
+          <div class="cmdLocked" id="cmdLockPrompt">
+            <div class="small">ロック中。下のボタンを押すと使えるようになる。</div>
+            <button class="cmdBtn" id="unlockCmdBtn">コマンドのロックを解除</button>
+          </div>
+          <div id="cmdUnlockedBox" style="display:none;">
+            <div class="small">
+              使い方:<br>
+              /give 〈アイテム名〉 〈個数〉<br>
+              /setblock 〈ブロック名〉 〈数字〉<br>
+              /fill 〈ブロック名〉 〈初めの座標〉 〈終わりの座標〉<br>
+              /tp 〈x座標〉 [y座標]<br>
+              /time 〈昼or夜 or 00:00〜23:59〉<br>
+              /keepinventory<br>
+              /dim 〈overworld / nether〉<br>
+              /spawn 〈モブ名〉 〈数〉
+            </div>
+            <div class="cmdInputRow">
+              <input id="cmdInput" type="text" autocomplete="off" placeholder="/give 丸石 32" />
+              <button class="cmdRun" id="runCmdBtn">実行</button>
+            </div>
+            <div class="cmdFavNote">実行ボタンを0.5秒長押しでお気に入り登録。下のボタンはタップで実行、長押しで解除。</div>
+            <div id="cmdFavList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>セーブ</h3>
+        <div class="small">ここから世界を保存できる。セーブが0個なら自動で新規ワールドになる。世界は10個まで。</div>
+        <button class="saveBtn" id="saveWorldBtn">セーブ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="worldOverlay" aria-hidden="true">
+  <div id="worldPanel">
+    <div class="panelHeader">
+      <strong>ワールド一覧</strong>
+      <button class="panelClose" id="closeWorldList">閉じる</button>
+    </div>
+    <div id="worldContent">
+      <div class="section">
+        <h3>保存済みワールド</h3>
+        <div class="small">開く・名前変更・画像変更・複製・削除ができる。</div>
+        <div id="worldGrid"></div>
+      </div>
+      <div class="section">
+        <h3>新しいワールド</h3>
+        <div class="small">空きがあるときだけ作れる。</div>
+        <button class="saveBtn" id="createWorldBtn">新しいワールドを作る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirmOverlay">
+  <div id="confirmBox">
+    <div id="confirmText">—</div>
+    <div id="confirmBtns">
+      <button class="yesBtn" id="confirmYes">はい</button>
+      <button class="noBtn" id="confirmNo">いいえ</button>
+    </div>
+  </div>
+</div>
+
+<input id="worldImageInput" type="file" accept="image/*" hidden />
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SAVE_KEY = 'oneDmc_saves_v10';
+  const GLOBAL_KEY = 'oneDmc_global_v10';
+  const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
+  const PASSABLE = new Set(['empty','water','lava','fire','nether_portal']);
+
+  const appEl = $('app');
+  const line = $('line');
+  const posText = $('posText');
+  const msgText = $('msgText');
+  const mineBtn = document.querySelector('#controls [data-act="mine"]');
+  const placeBtn = document.querySelector('#controls [data-act="place"]');
+
+  const invOverlay = $('invOverlay');
+  const invPanel = $('invPanel');
+  const tabContent = $('tabContent');
+  const invList = $('invList');
+  const heldText = $('heldText');
+  const invSearch = $('invSearch');
+  const searchClearBtn = $('searchClearBtn');
+  const craftGridHolder = $('craftGridHolder');
+  const craftModeText = $('craftModeText');
+  const craftResultText = $('craftResultText');
+  const craftDoBtn = $('craftDo');
+  const craftClearBtn = $('craftClear');
+
+  const furnaceSection = $('furnaceSection');
+  const furnaceInfo = $('furnaceInfo');
+  const fInputCount = $('fInputCount');
+  const fFuelCount = $('fFuelCount');
+  const fOutCount = $('fOutCount');
+  const fInputItem = $('fInputItem');
+  const fFuelItem = $('fFuelItem');
+  const fOutItem = $('fOutItem');
+  const smeltBtn = $('smeltBtn');
+
+  const cmdLockPrompt = $('cmdLockPrompt');
+  const cmdUnlockedBox = $('cmdUnlockedBox');
+  const unlockCmdBtn = $('unlockCmdBtn');
+  const cmdInput = $('cmdInput');
+  const runCmdBtn = $('runCmdBtn');
+  const cmdFavList = $('cmdFavList');
+  const saveWorldBtn = $('saveWorldBtn');
+
+  const confirmOverlay = $('confirmOverlay');
+  const confirmText = $('confirmText');
+  const confirmYes = $('confirmYes');
+  const confirmNo = $('confirmNo');
+
+  const worldOverlay = $('worldOverlay');
+  const worldGrid = $('worldGrid');
+  const closeWorldList = $('closeWorldList');
+  const createWorldBtn = $('createWorldBtn');
+  const worldImageInput = $('worldImageInput');
+
+  function loadJSON(key,fallback){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch{ return fallback; }
+  }
+  function saveJSON(key,value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+  function deep(obj){ return JSON.parse(JSON.stringify(obj)); }
+  function normText(s){ return String(s ?? '').replace(/\u3000/g,' ').trim(); }
+
+  const globalState = Object.assign({ favoriteCmds:[] }, loadJSON(GLOBAL_KEY, {}));
+  if(!Array.isArray(globalState.favoriteCmds)) globalState.favoriteCmds = [];
+  function saveGlobal(){ saveJSON(GLOBAL_KEY, { favoriteCmds: globalState.favoriteCmds.slice(0,3) }); }
+
+  const BLOCKS = {
+    empty:{name:'無',icon:'·'},
+    air_item:{name:'空気',icon:'·'},
+
+    dirt:{name:'土',icon:'■'}, grass:{name:'草',icon:'■'}, wood:{name:'木',icon:'■'}, leaf:{name:'葉',icon:'■'},
+    stone:{name:'石',icon:'■'}, cobblestone:{name:'丸石',icon:'■'},
+
+    coal_ore:{name:'石炭鉱石',icon:'■'}, iron_ore:{name:'鉄鉱石',icon:'■'}, gold_ore:{name:'金鉱石',icon:'■'}, diamond_ore:{name:'ダイヤ鉱石',icon:'◆'},
+    sand:{name:'砂',icon:'▒'}, obsidian:{name:'黒曜石',icon:'⬛'},
+    netherrack:{name:'ネザーラック',icon:'▤'}, soul_sand:{name:'ソウルサンド',icon:'▧'}, ancient_debris:{name:'古代の残骸',icon:'◈'},
+
+    water:{name:'水',icon:'≈'}, lava:{name:'溶岩',icon:'≋'},
+
+    plank:{name:'板材',icon:'■'}, stick:{name:'棒',icon:'│'}, torch:{name:'たいまつ',icon:'✦'}, crafting_table:{name:'作業台',icon:'□'}, furnace:{name:'かまど',icon:'▣'},
+
+    raw_iron:{name:'鉄の原石',icon:'◆'}, raw_gold:{name:'金の原石',icon:'◆'}, iron_ingot:{name:'鉄インゴット',icon:'▣'}, gold_ingot:{name:'金インゴット',icon:'▣'},
+    diamond:{name:'ダイヤ',icon:'♦'}, flint:{name:'火打石',icon:'◈'}, gunpowder:{name:'火薬',icon:'✹'},
+
+    bucket:{name:'バケツ',icon:'🪣'}, water_bucket:{name:'水入りバケツ',icon:'💧'}, lava_bucket:{name:'溶岩入りバケツ',icon:'🌋'}, flint_and_steel:{name:'火打石と打ち金',icon:'⚒'}, tnt:{name:'TNT',icon:'💣'}, nether_portal:{name:'ネザーゲートブロック',icon:'🌀'},
+
+    wooden_pickaxe:{name:'木のツルハシ',icon:'⛏'}, stone_pickaxe:{name:'石のツルハシ',icon:'⛏'}, iron_pickaxe:{name:'鉄のツルハシ',icon:'⛏'}, gold_pickaxe:{name:'金のツルハシ',icon:'⛏'}, diamond_pickaxe:{name:'ダイヤのツルハシ',icon:'⛏'},
+    wooden_axe:{name:'木の斧',icon:'🪓'}, stone_axe:{name:'石の斧',icon:'🪓'}, iron_axe:{name:'鉄の斧',icon:'🪓'}, gold_axe:{name:'金の斧',icon:'🪓'}, diamond_axe:{name:'ダイヤの斧',icon:'🪓'},
+    wooden_shovel:{name:'木のシャベル',icon:'⛏'}, stone_shovel:{name:'石のシャベル',icon:'⛏'}, iron_shovel:{name:'鉄のシャベル',icon:'⛏'}, gold_shovel:{name:'金のシャベル',icon:'⛏'}, diamond_shovel:{name:'ダイヤのシャベル',icon:'⛏'},
+    wooden_sword:{name:'木の剣',icon:'⚔'}, stone_sword:{name:'石の剣',icon:'⚔'}, iron_sword:{name:'鉄の剣',icon:'⚔'}, gold_sword:{name:'金の剣',icon:'⚔'}, diamond_sword:{name:'ダイヤの剣',icon:'⚔'},
+
+    wood_alltools:{name:'wood all tools',icon:'⚒'}, stone_alltools:{name:'stone all tools',icon:'⚒'}, iron_alltools:{name:'iron all tools',icon:'⚒'}, gold_alltools:{name:'gold all tools',icon:'⚒'}, diamond_alltools:{name:'diamond all tools',icon:'⚒'}
+  };
+
+  const ITEM_ORDER = [
+    'air_item','wood','plank','stick','sand','flint','gunpowder',
+    'cobblestone','raw_iron','raw_gold','iron_ingot','gold_ingot','diamond',
+    'obsidian','netherrack','soul_sand','ancient_debris','water','lava',
+    'bucket','water_bucket','lava_bucket','flint_and_steel','tnt','nether_portal',
+    'dirt','grass','leaf','stone','coal_ore','iron_ore','gold_ore','diamond_ore',
+    'crafting_table','furnace','torch',
+    'wooden_pickaxe','stone_pickaxe','iron_pickaxe','gold_pickaxe','diamond_pickaxe',
+    'wooden_axe','stone_axe','iron_axe','gold_axe','diamond_axe',
+    'wooden_shovel','stone_shovel','iron_shovel','gold_shovel','diamond_shovel',
+    'wooden_sword','stone_sword','iron_sword','gold_sword','diamond_sword',
+    'wood_alltools','stone_alltools','iron_alltools','gold_alltools','diamond_alltools'
+  ];
+
+  const PLACEABLE = new Set([
+    'dirt','grass','wood','leaf','stone','sand','cobblestone',
+    'crafting_table','furnace','torch','plank','water','lava','tnt','nether_portal',
+    'obsidian','netherrack','soul_sand','ancient_debris'
+  ]);
+  const CRAFT_INPUTS = new Set([
+    'wood','plank','stick','sand','flint','gunpowder','cobblestone',
+    'raw_iron','raw_gold','iron_ingot','gold_ingot','diamond',
+    'obsidian','netherrack','soul_sand','ancient_debris','bucket','water_bucket','lava_bucket','flint_and_steel'
+  ]);
+
+  function toolOutId(prefix,suffix){ return prefix==='wood' ? `wooden_${suffix}` : `${prefix}_${suffix}`; }
+
+  const RECIPES = [
+    {title:'木材 ×1 → 板材 ×4', type:'shapeless', need:{wood:1}, give:{plank:4}},
+    {title:'板材 ×2 → 棒 ×4', type:'shapeless', need:{plank:2}, give:{stick:4}},
+    {title:'板材 ×4 → 作業台 ×1', type:'shaped', width:2, height:2, pattern:['plank','plank','plank','plank'], give:{crafting_table:1}},
+    {title:'丸石 ×8 → かまど ×1', type:'shaped', width:3, height:3, pattern:['cobblestone','cobblestone','cobblestone','cobblestone',null,'cobblestone','cobblestone','cobblestone','cobblestone'], give:{furnace:1}},
+    {title:'鉄インゴット ×3 → バケツ ×1', type:'shaped', width:3, height:2, pattern:['iron_ingot',null,'iron_ingot',null,'iron_ingot',null], give:{bucket:1}},
+    {title:'火打石 ×1 + 鉄インゴット ×1 → 火打石と打ち金 ×1', type:'shaped', width:2, height:1, pattern:['flint','iron_ingot'], give:{flint_and_steel:1}},
+    {title:'砂 ×4 + 火薬 ×5 → TNT ×1', type:'shaped', width:3, height:3, pattern:['sand','gunpowder','sand','gunpowder','gunpowder','gunpowder','sand','gunpowder','sand'], give:{tnt:1}},
+    {title:'棒 ×1 + 石炭 ×1 → たいまつ ×4', type:'shapeless', need:{stick:1,coal:1}, give:{torch:4}}
+  ];
+  function addToolRecipes(matId,jpPrefix,prefix){
+    RECIPES.push(
+      {title:`${jpPrefix}の剣 ×1`, type:'shaped', width:1, height:3, pattern:[matId,matId,'stick'], give:{[toolOutId(prefix,'sword')]:1}},
+      {title:`${jpPrefix}のシャベル ×1`, type:'shaped', width:1, height:3, pattern:[matId,'stick','stick'], give:{[toolOutId(prefix,'shovel')]:1}},
+      {title:`${jpPrefix}の斧 ×1`, type:'shaped', width:3, height:3, pattern:[matId,matId,null, matId,'stick',null, null,'stick',null], give:{[toolOutId(prefix,'axe')]:1}},
+      {title:`${jpPrefix}のツルハシ ×1`, type:'shaped', width:3, height:3, pattern:[matId,matId,matId, null,'stick',null, null,'stick',null], give:{[toolOutId(prefix,'pickaxe')]:1}},
+      {title:`${jpPrefix}の万能ツール ×1`, type:'shaped', width:3, height:3, pattern:[matId,matId,matId, matId,'stick',null, null,'stick',null], give:{[`${prefix}_alltools`]:1}}
+    );
+  }
+  addToolRecipes('plank','木','wood');
+  addToolRecipes('cobblestone','石','stone');
+  addToolRecipes('iron_ingot','鉄','iron');
+  addToolRecipes('gold_ingot','金','gold');
+  addToolRecipes('diamond','ダイヤ','diamond');
+
+  function makeWorld(dim){
+    return { dim, seed:Math.floor(Math.random()*1e9), mods:new Map(), fire:new Map(), tnt:new Map(), mobs:[], corpses:new Map(), furnace:new Map() };
+  }
+  function serializeMap(map){ return [...map.entries()]; }
+  function deserializeMap(arr){ return new Map(Array.isArray(arr) ? arr : []); }
+  function normalizeTntValue(v){
+    if(v && typeof v === 'object') return { lit:!!v.lit, age:Number(v.age)||0 };
+    if(typeof v === 'number') return { lit:v>0, age:Math.max(0, Number(v)||0) };
+    return { lit:false, age:0 };
+  }
+  function serializeWorld(w){
+    return {
+      dim:w.dim, seed:w.seed, mods:serializeMap(w.mods), fire:serializeMap(w.fire),
+      tnt:[...w.tnt.entries()].map(([k,v]) => [k, normalizeTntValue(v)]),
+      mobs:deep(w.mobs), corpses:serializeMap(w.corpses), furnace:serializeMap(w.furnace)
+    };
+  }
+  function deserializeWorld(data, dim){
+    const w = makeWorld(dim);
+    if(!data) return w;
+    w.seed = data.seed ?? w.seed;
+    w.mods = deserializeMap(data.mods);
+    w.fire = deserializeMap(data.fire);
+    w.tnt = new Map((Array.isArray(data.tnt)?data.tnt:[]).map(([k,v]) => [k, normalizeTntValue(v)]));
+    w.mobs = Array.isArray(data.mobs) ? data.mobs.map(m => ({...m})) : [];
+    w.corpses = deserializeMap(data.corpses);
+    w.furnace = deserializeMap(data.furnace);
+    return w;
+  }
+
+  const saves = loadJSON(SAVE_KEY, []);
+  let activeSaveId = null;
+  const worlds = { [DIM.OVERWORLD]: makeWorld(DIM.OVERWORLD), [DIM.NETHER]: makeWorld(DIM.NETHER) };
+
+  const state = {
+    dim:DIM.OVERWORLD,
+    pos:{
+      [DIM.OVERWORLD]:{x:0,y:0},
+      [DIM.NETHER]:{x:0,y:0}
+    },
+    facing:1,
+    hp:10,maxHp:10, breath:10,maxBreath:10,
+    regenAcc:0,downedAcc:0,attackCd:0,
+    fireAcc:0,lavaAcc:0,burnRemain:0,burnAcc:0,waterDamageAcc:0,
+    soulSlow:0, prevBlock:'empty',
+    gameTime:0, nightSpawnAcc:0,
+    portalAcc:0, portalRecentTravel:false, portalShake:0,
+    now:0,
+    inventory:{}, infiniteItems:new Set(), heldItem:null, favoriteItems:[],
+    keepInventory:false, cmdUnlocked:false,
+    craftGridSize:2, craftGrid:Array(4).fill(null), inventorySearch:''
+  };
+
+  const lineCache = { [DIM.OVERWORLD]: new Map(), [DIM.NETHER]: new Map() };
+  function clearLineCaches(){ lineCache[DIM.OVERWORLD].clear(); lineCache[DIM.NETHER].clear(); }
+
+  function world(){ return worlds[state.dim]; }
+  function currentPos(){ return state.pos[state.dim]; }
+  function activeAxis(){ return state.dim === DIM.OVERWORLD ? 'x' : 'y'; }
+  function fixedAxis(){ return state.dim === DIM.OVERWORLD ? 'y' : 'x'; }
+  function activeCoord(){ return currentPos()[activeAxis()]; }
+  function fixedCoord(){ return currentPos()[fixedAxis()]; }
+  function isTyping(){
+    const a = document.activeElement;
+    return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+  }
+  function setMsg(t){ msgText.textContent = t; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+  function displayName(id){ return id ? (BLOCKS[id]?.name || id) : 'なし'; }
+
+  function hashMany(seed, ...vals){
+    let h = seed >>> 0;
+    for(const v of vals){
+      h = Math.imul(h ^ (v | 0), 2246822519) >>> 0;
+      h ^= h >>> 13;
+      h = Math.imul(h, 3266489917) >>> 0;
+    }
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  function weightedPick(list, r){
+    const sum = list.reduce((s,[,w]) => s + w, 0);
+    let t = r * sum;
+    for(const [v,w] of list){
+      t -= w;
+      if(t <= 0) return v;
+    }
+    return list[list.length - 1][0];
+  }
+
+  const DIM_POOLS = {
+    [DIM.OVERWORLD]: {
+      soil: [['empty',2], ['grass',1], ['dirt',0.5], ['sand',0.5]],
+      stone: [['stone',30], ['coal_ore',20], ['iron_ore',10], ['gold_ore',5], ['diamond_ore',1]],
+      wood:  [['empty',2], ['wood',2], ['leaf',1]],
+      liquid:[['empty',2], ['water',0.4], ['lava',0.1]]
+    },
+    [DIM.NETHER]: {
+      nether:[['empty',2], ['netherrack',1.25], ['soul_sand',0.45], ['ancient_debris',0.08]],
+      liquid:[['empty',2], ['lava',0.15]]
+    }
+  };
+  const DIM_CAT = {
+    [DIM.OVERWORLD]: [['soil',1.35], ['stone',1.0], ['wood',0.95], ['liquid',0.22]],
+    [DIM.NETHER]: [['nether',1.85], ['liquid',0.18]]
+  };
+
+  class LineGen{
+    constructor(dim, lineCoord){
+      this.dim = dim;
+      this.lineCoord = lineCoord|0;
+      this.posRuns = [];
+      this.negRuns = [];
+      this.posEnd = 0;
+      this.negEnd = 0;
+      this.posPrev = this.dim === DIM.OVERWORLD ? 'soil' : 'nether';
+      this.negPrev = this.posPrev;
+    }
+    chooseCat(prev, side, idx){
+      const base = DIM_CAT[this.dim].map(([k,w]) => {
+        let ww = w;
+        if(k === prev) ww *= 4.25;
+        if(prev === 'soil' && k === 'stone') ww *= 1.5;
+        if(prev === 'stone' && k === 'soil') ww *= 1.25;
+        if(prev === 'wood' && k === 'soil') ww *= 1.2;
+        if(prev === 'liquid' && k === 'liquid') ww *= 5;
+        if(prev === 'nether' && k === 'liquid') ww *= 0.8;
+        return [k, ww];
+      });
+      const r = hashMany(worlds[this.dim].seed, this.lineCoord, side === 'pos' ? 1 : -1, idx, 1001);
+      return weightedPick(base, r);
+    }
+    ensure(side, absCoord){
+      const runs = side === 'pos' ? this.posRuns : this.negRuns;
+      let end = side === 'pos' ? this.posEnd : this.negEnd;
+      let prev = side === 'pos' ? this.posPrev : this.negPrev;
+      while(end < absCoord){
+        const idx = runs.length;
+        const len = 5 + Math.floor(hashMany(worlds[this.dim].seed, this.lineCoord, side === 'pos' ? 7 : 9, idx, 2002) * 6);
+        const cat = this.chooseCat(prev, side, idx);
+        const start = end + 1;
+        const run = { start, end:start+len-1, cat, idx };
+        runs.push(run);
+        end = run.end;
+        prev = cat;
+      }
+      if(side === 'pos'){ this.posEnd = end; this.posPrev = prev; }
+      else{ this.negEnd = end; this.negPrev = prev; }
+    }
+    pickFromPool(cat, idx, absCoord, side){
+      const pool = DIM_POOLS[this.dim][cat];
+      const r = hashMany(worlds[this.dim].seed, this.lineCoord, side === 'pos' ? 11 : 13, idx, absCoord, 3033);
+      const b = weightedPick(pool, r);
+      return b === 'air' ? 'empty' : b;
+    }
+    blockAt(coord){
+      if(coord === 0) return 'empty';
+      const side = coord > 0 ? 'pos' : 'neg';
+      const abs = Math.abs(coord);
+      this.ensure(side, abs);
+      const runs = side === 'pos' ? this.posRuns : this.negRuns;
+      for(const run of runs){
+        if(abs >= run.start && abs <= run.end){
+          return this.pickFromPool(run.cat, run.idx, abs, side);
+        }
+      }
+      return 'empty';
+    }
+  }
+  function getLineGen(dim, lineCoord){
+    const key = lineCoord|0;
+    const cache = lineCache[dim];
+    if(!cache.has(key)) cache.set(key, new LineGen(dim, key));
+    return cache.get(key);
+  }
+
+  function naturalBlock(dim,x,y){
+    const major = dim === DIM.OVERWORLD ? x : y;
+    const minor = dim === DIM.OVERWORLD ? y : x;
+    if(major === 0) return 'empty';
+    return getLineGen(dim, minor).blockAt(major);
+  }
+
+  function getBlockAt(dim,x,y){
+    const w = worlds[dim];
+    const k = `${x},${y}`;
+    return w.mods.has(k) ? w.mods.get(k) : naturalBlock(dim,x,y);
+  }
+  function setBlockAt(dim,x,y,block){
+    const w = worlds[dim];
+    const k = `${x},${y}`;
+    if(block === 'empty'){
+      w.mods.set(k,'empty');
+      w.fire.delete(k);
+      w.tnt.delete(k);
+      return;
+    }
+    w.mods.set(k,block);
+    if(block === 'fire'){
+      w.fire.set(k,0);
+      w.tnt.delete(k);
+    }else if(block === 'tnt'){
+      if(!w.tnt.has(k)) w.tnt.set(k,{lit:false,age:0});
+      w.fire.delete(k);
+    }else{
+      w.fire.delete(k);
+      w.tnt.delete(k);
+    }
+  }
+  function buildSpawnArea(){
+    for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
+      for(let i=-3;i<=3;i++) setBlockAt(dim,i,0,'empty');
+    }
+  }
+  function ensureSpawnResources(){
+    let woodCount = 0;
+    for(let x=-10;x<=10;x++) if(getBlockAt(DIM.OVERWORLD,x,0) === 'wood') woodCount++;
+    for(const x of [-10,-9,-8,-7,-6,-5,5,6,7,8,9,10]){
+      if(woodCount>=3) break;
+      if(getBlockAt(DIM.OVERWORLD,x,0) !== 'wood'){
+        setBlockAt(DIM.OVERWORLD,x,0,'wood');
+        woodCount++;
+      }
+    }
+    let stoneCount = 0;
+    for(let x=-20;x<=20;x++) if(getBlockAt(DIM.OVERWORLD,x,0) === 'stone') stoneCount++;
+    for(const x of [-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,9,10,11,12,13,14,15,16,17,18,19,20]){
+      if(stoneCount>=6) break;
+      if(getBlockAt(DIM.OVERWORLD,x,0) !== 'stone'){
+        setBlockAt(DIM.OVERWORLD,x,0,'stone');
+        stoneCount++;
+      }
+    }
+  }
+
+  function mobAlias(token){
+    const t = normText(token).toLowerCase();
+    const map = { zombie:'zombie', ゾンビ:'zombie', creeper:'creeper', クリーパー:'creeper' };
+    return map[token] || map[t] || null;
+  }
+  function blockAlias(token){
+    const t = normText(token);
+    const map = {
+      air:'empty', empty:'empty', 空気:'empty', 無:'empty',
+      土:'dirt', 草:'grass', 木:'wood', 葉:'leaf', 石:'stone', 丸石:'cobblestone',
+      砂:'sand', 黒曜石:'obsidian', ネザーラック:'netherrack', ソウルサンド:'soul_sand', 古代の残骸:'ancient_debris',
+      水:'water', 溶岩:'lava', 石炭鉱石:'coal_ore', 鉄鉱石:'iron_ore', 金鉱石:'gold_ore', ダイヤ鉱石:'diamond_ore',
+      板材:'plank', 棒:'stick', たいまつ:'torch', 作業台:'crafting_table', かまど:'furnace',
+      鉄の原石:'raw_iron', 金の原石:'raw_gold', 鉄インゴット:'iron_ingot', 金インゴット:'gold_ingot',
+      火打石:'flint', 火薬:'gunpowder', バケツ:'bucket', 水入りバケツ:'water_bucket', 溶岩入りバケツ:'lava_bucket',
+      火打石と打ち金:'flint_and_steel', TNT:'tnt', ネザーゲートブロック:'nether_portal',
+      stone:'stone', dirt:'dirt', grass:'grass', wood:'wood', leaf:'leaf', plank:'plank', stick:'stick',
+      torch:'torch', crafting_table:'crafting_table', furnace:'furnace', sand:'sand',
+      obsidian:'obsidian', netherrack:'netherrack', soul_sand:'soul_sand', ancient_debris:'ancient_debris',
+      water:'water', lava:'lava', raw_iron:'raw_iron', raw_gold:'raw_gold', iron_ingot:'iron_ingot', gold_ingot:'gold_ingot',
+      diamond:'diamond', flint:'flint', gunpowder:'gunpowder', bucket:'bucket',
+      water_bucket:'water_bucket', lava_bucket:'lava_bucket', flint_and_steel:'flint_and_steel', tnt:'tnt', nether_portal:'nether_portal',
+      cobblestone:'cobblestone',
+      coal_ore:'coal_ore', iron_ore:'iron_ore', gold_ore:'gold_ore', diamond_ore:'diamond_ore'
+    };
+    return map[t] || map[token] || token;
+  }
+  function itemAlias(token){
+    const t = normText(token);
+    const map = {
+      空気:'air_item', air:'air_item', air_item:'air_item',
+      石炭鉱石:'coal_ore', 鉄鉱石:'iron_ore', 金鉱石:'gold_ore', ダイヤ鉱石:'diamond_ore',
+      鉄の原石:'raw_iron', 金の原石:'raw_gold', 鉄インゴット:'iron_ingot', 金インゴット:'gold_ingot',
+      木の剣:'wooden_sword', 石の剣:'stone_sword', 鉄の剣:'iron_sword', 金の剣:'gold_sword', ダイヤの剣:'diamond_sword',
+      木の斧:'wooden_axe', 石の斧:'stone_axe', 鉄の斧:'iron_axe', 金の斧:'gold_axe', ダイヤの斧:'diamond_axe',
+      木のシャベル:'wooden_shovel', 石のシャベル:'stone_shovel', 鉄のシャベル:'iron_shovel', 金のシャベル:'gold_shovel', ダイヤのシャベル:'diamond_shovel',
+      木のツルハシ:'wooden_pickaxe', 石のツルハシ:'stone_pickaxe', 鉄のツルハシ:'iron_pickaxe', 金のツルハシ:'gold_pickaxe', ダイヤのツルハシ:'diamond_pickaxe',
+      woodalltools:'wood_alltools', stonealltools:'stone_alltools', ironalltools:'iron_alltools', goldalltools:'gold_alltools', diamondalltools:'diamond_alltools',
+      wood_alltools:'wood_alltools', stone_alltools:'stone_alltools', iron_alltools:'iron_alltools', gold_alltools:'gold_alltools', diamond_alltools:'diamond_alltools',
+      'wood all tools':'wood_alltools', 'stone all tools':'stone_alltools', 'iron all tools':'iron_alltools', 'gold all tools':'gold_alltools', 'diamond all tools':'diamond_alltools',
+      wood:'wood', plank:'plank', stick:'stick', sand:'sand', flint:'flint', gunpowder:'gunpowder',
+      cobblestone:'cobblestone', coal:'coal', diamond:'diamond', dirt:'dirt', grass:'grass', leaf:'leaf',
+      crafting_table:'crafting_table', furnace:'furnace', torch:'torch', obsidian:'obsidian', netherrack:'netherrack', soul_sand:'soul_sand', ancient_debris:'ancient_debris',
+      water:'water', lava:'lava', bucket:'bucket', water_bucket:'water_bucket', lava_bucket:'lava_bucket', flint_and_steel:'flint_and_steel', tnt:'tnt', nether_portal:'nether_portal',
+      stone:'stone', coal_ore:'coal_ore', iron_ore:'iron_ore', gold_ore:'gold_ore', diamond_ore:'diamond_ore',
+      'coal ore':'coal_ore', 'iron ore':'iron_ore', 'gold ore':'gold_ore', 'diamond ore':'diamond_ore'
+    };
+    const key = t.toLowerCase();
+    const compact = key.replace(/\s+/g,' ');
+    return map[t] || map[key] || map[compact] || token;
+  }
+  function parseGiveTarget(raw){
+    const token = normText(raw);
+    if(!token) return null;
+    if(token === '∀' || token.toUpperCase() === 'ALL') return { kind:'all' };
+    const compact = token.replace(/[\s_\-]/g,'').replace(/の/g,'').toLowerCase();
+    if(compact.endsWith('alltools')){
+      const prefix = compact.slice(0,-8);
+      const gradeMap = { wood:'wood', wooden:'wood', stone:'stone', iron:'iron', gold:'gold', diamond:'diamond' };
+      const grade = gradeMap[prefix];
+      if(grade) return { kind:'item', id:`${grade}_alltools` };
+    }
+    return { kind:'item', id:itemAlias(token) };
+  }
+
+  function toolTypeOf(item){
+    if(!item) return 'none';
+    if(item.endsWith('_alltools')) return 'alltools';
+    if(item.endsWith('_pickaxe')) return 'pickaxe';
+    if(item.endsWith('_axe')) return 'axe';
+    if(item.endsWith('_shovel')) return 'shovel';
+    if(item.endsWith('_sword')) return 'sword';
+    return 'none';
+  }
+  function toolMaterialOf(item){
+    if(!item) return 'none';
+    if(item.endsWith('_alltools')){
+      const base = item.split('_')[0];
+      if(base==='wood') return 'wood';
+      if(base==='stone') return 'stone';
+      if(base==='iron') return 'iron';
+      if(base==='gold') return 'gold';
+      if(base==='diamond') return 'diamond';
+    }
+    if(item.startsWith('wooden_') || item.startsWith('wood_')) return 'wood';
+    if(item.startsWith('stone_')) return 'stone';
+    if(item.startsWith('iron_')) return 'iron';
+    if(item.startsWith('gold_')) return 'gold';
+    if(item.startsWith('diamond_')) return 'diamond';
+    return 'none';
+  }
+  function toolTierOf(item){
+    const mat = toolMaterialOf(item);
+    if(mat==='wood') return 1;
+    if(mat==='stone') return 2;
+    if(mat==='iron') return 3;
+    if(mat==='gold') return 5;
+    if(mat==='diamond') return 5;
+    return 0;
+  }
+  function swordDamage(item){
+    if(item==='wooden_sword') return 2;
+    if(item==='stone_sword') return 3;
+    if(item==='iron_sword') return 4;
+    if(item==='gold_sword') return 16;
+    if(item==='diamond_sword') return 5;
+    if(item==='wood_alltools') return 2;
+    if(item==='stone_alltools') return 3;
+    if(item==='iron_alltools') return 4;
+    if(item==='gold_alltools') return 16;
+    if(item==='diamond_alltools') return 5;
+    return 1;
+  }
+  function breakChanceOnUse(item,kind){
+    const mat = toolMaterialOf(item);
+    if(mat !== 'gold') return 0;
+    if(kind==='attack') return 0.5;
+    if(kind==='mine') return 0.25;
+    return 0;
+  }
+  function breakHeldTool(item){
+    if(!item || count(item)<=0) return;
+    removeItem(item,1);
+    setMsg(`${displayName(item)} が壊れた。`);
+  }
+  function canPlaceable(item){ return PLACEABLE.has(item); }
+  function canCraftInput(item){ return CRAFT_INPUTS.has(item); }
+  function isShovelLike(item){ return toolTypeOf(item)==='shovel' || toolTypeOf(item)==='alltools'; }
+  function isAxeLike(item){ return toolTypeOf(item)==='axe' || toolTypeOf(item)==='alltools'; }
+  function isPickLike(item){ return toolTypeOf(item)==='pickaxe' || toolTypeOf(item)==='alltools'; }
+  function isSwordLike(item){ return toolTypeOf(item)==='sword' || toolTypeOf(item)==='alltools'; }
+  function isSoftMineBlock(block){
+    return ['dirt','grass','sand','wood','leaf','plank','crafting_table','furnace','torch','soul_sand'].includes(block);
+  }
+
+  function mineRule(block){
+    const rules = {
+      dirt:{tool:'shovel',drop:'dirt'}, grass:{tool:'shovel',drop:'dirt'}, sand:{tool:'shovel',drop:'sand'}, soul_sand:{tool:'shovel',drop:'soul_sand'},
+      wood:{tool:'axe',drop:'wood'}, leaf:{tool:'axe',drop:'leaf'}, plank:{tool:'axe',drop:'plank'},
+
+      stone:{tool:'pickaxe',drop:'cobblestone'}, cobblestone:{tool:'pickaxe',drop:'cobblestone'},
+      coal_ore:{tool:'pickaxe',drop:'coal',minTier:1}, iron_ore:{tool:'pickaxe',drop:'raw_iron',minTier:2}, gold_ore:{tool:'pickaxe',drop:'raw_gold',minTier:2}, diamond_ore:{tool:'pickaxe',drop:'diamond',minTier:3},
+      obsidian:{tool:'pickaxe',drop:'obsidian',minTier:5}, ancient_debris:{tool:'pickaxe',drop:'ancient_debris',minTier:2},
+
+      netherrack:{tool:'any',drop:'netherrack'}, crafting_table:{tool:'any',drop:'crafting_table'}, furnace:{tool:'any',drop:'furnace'}, torch:{tool:'any',drop:'torch'},
+      raw_iron:{tool:'any',drop:'raw_iron'}, raw_gold:{tool:'any',drop:'raw_gold'}, iron_ingot:{tool:'any',drop:'iron_ingot'}, gold_ingot:{tool:'any',drop:'gold_ingot'}, diamond:{tool:'any',drop:'diamond'},
+      flint:{tool:'any',drop:'flint'}, gunpowder:{tool:'any',drop:'gunpowder'}, bucket:{tool:'any',drop:'bucket'}, water_bucket:{tool:'any',drop:'water_bucket'}, lava_bucket:{tool:'any',drop:'lava_bucket'}, flint_and_steel:{tool:'any',drop:'flint_and_steel'}, tnt:{tool:'any',drop:'tnt'},
+      nether_portal:{tool:'special',drop:'nether_portal'},
+      water:{tool:'none'}, lava:{tool:'none'}, fire:{tool:'none'}
+    };
+    return rules[block] || null;
+  }
+
+  function count(item){ return state.infiniteItems.has(item) ? Infinity : (state.inventory[item] || 0); }
+  function hasItem(item){ return count(item) > 0; }
+  function stackText(item){ const c = count(item); return `${displayName(item)} ×${c===Infinity ? '∞' : c}`; }
+
+  function normalizeHeld(){
+    if(state.heldItem && hasItem(state.heldItem)) return;
+    state.heldItem = null;
+    const ordered = [...state.favoriteItems.filter(i => hasItem(i)), ...ITEM_ORDER.filter(i => hasItem(i) && !state.favoriteItems.includes(i))];
+    for(const item of ordered){ if(hasItem(item)){ state.heldItem = item; break; } }
+  }
+  function addItem(item,n=1){
+    if(n===Infinity){
+      state.infiniteItems.add(item); state.inventory[item] = 1; normalizeHeld(); return;
+    }
+    if(state.infiniteItems.has(item)) return;
+    state.inventory[item] = (state.inventory[item] || 0) + n;
+    if(state.inventory[item] <= 0) delete state.inventory[item];
+    normalizeHeld();
+  }
+  function removeItem(item,n=1){
+    if(state.infiniteItems.has(item)) return;
+    if(!state.inventory[item]) return;
+    state.inventory[item] -= n;
+    if(state.inventory[item] <= 0) delete state.inventory[item];
+    normalizeHeld();
+  }
+  function currentTarget(){
+    const p = currentPos();
+    return activeAxis() === 'x' ? {x:p.x + state.facing, y:p.y} : {x:p.x, y:p.y + state.facing};
+  }
+  function isNight(){
+    return (Math.floor(state.gameTime) % 1440) >= 720;
+  }
+  function timeText(){
+    const t = Math.floor(state.gameTime) % 1440;
+    const night = t >= 720;
+    const sec = night ? t - 720 : t;
+    const mm = String(Math.floor(sec/60)).padStart(2,'0');
+    const ss = String(sec%60).padStart(2,'0');
+    return `${night ? '夜' : '昼'} ${mm}:${ss}`;
+  }
+
+  function enemyAtTarget(){
+    const t = currentTarget();
+    const w = world();
+    return w.mobs.find(m => !m.dead && Math.round(m.x) === t.x && Math.round(m.y) === t.y) || null;
+  }
+  function mobsInCell(x,y){
+    const w = world();
+    return w.mobs.filter(m => !m.dead && Math.round(m.x) === x && Math.round(m.y) === y);
+  }
+  function spawnMobAt(w,x,y,type){
+    if(getBlockAt(w.dim,x,y) !== 'empty') return false;
+    if(w.mobs.some(m => !m.dead && Math.round(m.x) === x && Math.round(m.y) === y)) return false;
+    w.mobs.push({
+      id:w.mobs.length+1, type, x, y, hp:10, dead:false, speed:type==='zombie' ? 0.22 : 0.34,
+      attackCd:0, contactAcc:0, ignited:false, fuse:0
+    });
+    return true;
+  }
+  function spawnNightMobNearPlayer(){
+    const w = world();
+    const p = currentPos();
+    const type = Math.random()<0.5 ? 'zombie' : 'creeper';
+    for(let i=0;i<16;i++){
+      const side = Math.random()<0.5 ? -1 : 1;
+      const dist = 5 + Math.floor(Math.random()*6);
+      if(state.dim===DIM.OVERWORLD){
+        if(spawnMobAt(w, p.x + side*dist, p.y, type)) return true;
+      }else{
+        if(spawnMobAt(w, p.x, p.y + side*dist, type)) return true;
+      }
+    }
+    return false;
+  }
+  function spawnCommandMob(type, countNum){
+    const w = world();
+    const t = currentTarget();
+    let spawned = 0;
+    const candidates = [];
+    for(let r=0;r<=3;r++){
+      for(let dx=-r; dx<=r; dx++){
+        for(let dy=-r; dy<=r; dy++){
+          if(Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          candidates.push({x:t.x+dx, y:t.y+dy});
+        }
+      }
+    }
+    for(let i=0;i<countNum;i++){
+      let placed = false;
+      for(const c of candidates){
+        if(spawnMobAt(w, c.x, c.y, type)){ spawned++; placed = true; break; }
+      }
+      if(!placed) break;
+    }
+    return spawned;
+  }
+
+  function respawnPlayer(){
+    state.pos[DIM.OVERWORLD] = {x:0,y:0};
+    state.dim = DIM.OVERWORLD;
+    state.facing = 1;
+    state.hp = 10; state.breath = 10;
+    state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
+    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
+    state.soulSlow = 0; state.prevBlock = 'empty'; state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
+    updateTheme(); setMsg('死んだ。Overworldの0に戻った。');
+  }
+  function hurtPlayer(amount, reason){
+    if(state.hp <= 0) return;
+    state.hp -= amount;
+    state.downedAcc = 0;
+    setMsg(reason);
+  }
+  function updatePlayerHealth(dt){
+    if(state.hp > 0){
+      state.regenAcc += dt;
+      while(state.regenAcc >= 1){
+        state.regenAcc -= 1;
+        if(Math.random() < 0.25 && state.hp < state.maxHp){
+          state.hp = Math.min(state.maxHp, state.hp + 0.5);
+        }
+      }
+    }else{
+      state.downedAcc += dt;
+      while(state.downedAcc >= 0.5){
+        state.downedAcc -= 0.5;
+        if(Math.random() < 0.5){
+          state.hp += 0.5;
+          if(state.hp > 0){ setMsg('ぎりぎり踏みとどまった。'); return; }
+        }else{
+          killPlayer(); return;
+        }
+      }
+    }
+  }
+
+  function updateBreath(dt){
+    const p = currentPos();
+    const inWater = getBlockAt(state.dim,p.x,p.y) === 'water';
+    if(inWater){
+      state.breath = Math.max(0, state.breath - dt);
+      if(state.breath <= 0){
+        state.waterDamageAcc += dt;
+        while(state.waterDamageAcc >= 1){
+          state.waterDamageAcc -= 1;
+          hurtPlayer(1,'息が続かない。');
+          if(state.hp <= 0) break;
+        }
+      }
+    }else{
+      state.breath = Math.min(state.maxBreath, state.breath + dt);
+      state.waterDamageAcc = 0;
+    }
+  }
+  function updateCorpses(dt){
+    const w = world();
+    const p = currentPos();
+    for(const [k,corpse] of [...w.corpses]){
+      corpse.age += dt;
+      corpse.claimAcc = (corpse.x===p.x && corpse.y===p.y) ? corpse.claimAcc + dt : 0;
+      if(corpse.age >= 300){ w.corpses.delete(k); continue; }
+      if(corpse.claimAcc >= 5){
+        for(const item of Object.keys(corpse.items || {})){
+          const n = corpse.items[item];
+          if(n === Infinity){ state.infiniteItems.add(item); state.inventory[item] = 1; }
+          else addItem(item,n);
+        }
+        w.corpses.delete(k);
+        setMsg('遺品を回収した。');
+      }
+    }
+  }
+  function updateTimedBlocks(dt){
+    for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
+      const w = worlds[dim];
+      for(const [k,age] of [...w.fire]){
+        const next = age + dt;
+        if(next >= 5){ if(w.mods.get(k)==='fire') w.mods.set(k,'empty'); w.fire.delete(k); }
+        else w.fire.set(k,next);
+      }
+      for(const [k,val] of [...w.tnt]){
+        const info = normalizeTntValue(val);
+        if(!info.lit) continue;
+        info.age += dt;
+        if(info.age >= 3){
+          w.tnt.delete(k);
+          const [x,y] = k.split(',').map(Number);
+          explodeTNT(dim,x,y,3);
+        }else w.tnt.set(k, info);
+      }
+    }
+  }
+  function explosionDamageAt(px,py,cx,cy){
+    const dist = Math.max(Math.abs(px-cx), Math.abs(py-cy));
+    if(dist===0) return 10;
+    if(dist===1) return 8;
+    if(dist===2) return 5;
+    if(dist===3) return 2;
+    return 0;
+  }
+  function explodeTNT(dim,cx,cy,radius){
+    const w = worlds[dim];
+    const p = state.pos[dim];
+    const dmg = explosionDamageAt(p.x,p.y,cx,cy);
+    if(dmg > 0) hurtPlayer(dmg, `TNTの爆発で${dmg}ダメージ受けた。`);
+
+    for(let x=cx-radius;x<=cx+radius;x++){
+      for(let y=cy-radius;y<=cy+radius;y++){
+        const b = getBlockAt(dim,x,y);
+        if(b === 'nether_portal') addItem('nether_portal',1);
+        if(b !== 'empty'){
+          w.mods.set(`${x},${y}`,'empty');
+          w.fire.delete(`${x},${y}`);
+          w.tnt.delete(`${x},${y}`);
+        }
+      }
+    }
+    setMsg('TNTが爆発した。');
+  }
+  function explodeCreeper(m){
+    if(m.dead) return;
+    m.dead = true;
+    const w = world();
+    const p = currentPos();
+    const dmg = explosionDamageAt(p.x,p.y,Math.round(m.x),Math.round(m.y));
+    if(dmg>0) hurtPlayer(dmg, `クリーパーの爆発で${dmg}ダメージ受けた。`);
+    const cx = Math.round(m.x), cy = Math.round(m.y);
+    for(let x=cx-3;x<=cx+3;x++){
+      for(let y=cy-3;y<=cy+3;y++){
+        const b = getBlockAt(state.dim,x,y);
+        if(b !== 'empty'){
+          w.mods.set(`${x},${y}`,'empty');
+          w.fire.delete(`${x},${y}`);
+          w.tnt.delete(`${x},${y}`);
+        }
+      }
+    }
+  }
+  function updateMobs(dt){
+    const w = world();
+    const p = currentPos();
+    for(const m of w.mobs){
+      if(m.dead) continue;
+      const dist = state.dim===DIM.OVERWORLD ? (p.x - m.x) : (p.y - m.y);
+      const abs = Math.abs(dist);
+      if(m.type === 'zombie'){
+        const dir = Math.sign(dist) || 1;
+        if(state.dim===DIM.OVERWORLD){
+          const nx = Math.round(m.x + dir*m.speed*dt);
+          if(PASSABLE.has(getBlockAt(state.dim,nx,m.y))) m.x += dir*m.speed*dt;
+        }else{
+          const ny = Math.round(m.y + dir*m.speed*dt);
+          if(PASSABLE.has(getBlockAt(state.dim,m.x,ny))) m.y += dir*m.speed*dt;
+        }
+        m.attackCd = Math.max(0, m.attackCd - dt);
+        if(abs <= 1){
+          m.contactAcc += dt;
+          if(m.contactAcc >= 0.5 && m.attackCd <= 0){
+            hurtPlayer(2,'ゾンビに2ダメージ受けた。');
+            m.attackCd = 1;
+            m.contactAcc = 0;
+          }
+        }else m.contactAcc = 0;
+      }else if(m.type === 'creeper'){
+        const dir = Math.sign(dist) || 1;
+        if(state.dim===DIM.OVERWORLD){
+          const nx = Math.round(m.x + dir*m.speed*dt);
+          if(PASSABLE.has(getBlockAt(state.dim,nx,m.y))) m.x += dir*m.speed*dt;
+        }else{
+          const ny = Math.round(m.y + dir*m.speed*dt);
+          if(PASSABLE.has(getBlockAt(state.dim,m.x,ny))) m.y += dir*m.speed*dt;
+        }
+        const d = Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y));
+        if(d <= 2 && !m.ignited){ m.ignited = true; m.fuse = 2; }
+        if(d >= 4 && m.ignited){ m.ignited = false; m.fuse = 0; }
+        if(m.ignited){
+          m.fuse -= dt;
+          if(m.fuse <= 0) explodeCreeper(m);
+        }
+      }
+    }
+  }
+
+  function currentHeldText(){ return state.heldItem ? stackText(state.heldItem) : 'なし'; }
+  function toggleItemFavorite(item){
+    if(state.favoriteItems.includes(item)) state.favoriteItems = state.favoriteItems.filter(v => v !== item);
+    else state.favoriteItems.push(item);
+  }
+
+  function refreshInventoryUI(){
+    invList.innerHTML = '';
+    const items = ITEM_ORDER.filter(k => count(k) > 0);
+    const q = state.inventorySearch.trim().toLowerCase();
+    const ordered = [...state.favoriteItems.filter(id => count(id) > 0), ...items.filter(id => !state.favoriteItems.includes(id))];
+    const filtered = ordered.filter(id => !q || displayName(id).toLowerCase().includes(q) || id.toLowerCase().includes(q));
+    if(!items.length){
+      const empty = document.createElement('div');
+      empty.className = 'small'; empty.textContent = '所持品なし'; invList.appendChild(empty);
+      heldText.textContent = '手持ち: なし'; return;
+    }
+    if(!filtered.length){
+      const empty = document.createElement('div');
+      empty.className = 'small'; empty.textContent = '検索に一致するものがない。'; invList.appendChild(empty);
+      heldText.textContent = `手持ち: ${state.heldItem ? stackText(state.heldItem) : 'なし'}`; return;
+    }
+    for(const item of filtered){
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (item===state.heldItem ? ' sel' : '') + (item.endsWith('_alltools') ? ' alltools' : '') + (state.favoriteItems.includes(item) ? ' pin' : '');
+      chip.textContent = stackText(item);
+      let timer = null, longed = false;
+      chip.addEventListener('pointerdown', e => {
+        e.preventDefault(); longed = false;
+        timer = setTimeout(() => {
+          longed = true;
+          toggleItemFavorite(item);
+          refreshInventoryUI();
+          setMsg(`${displayName(item)} の固定を切り替えた。`);
+        }, 500);
+      });
+      const clear = ()=>{ if(timer) clearTimeout(timer); timer = null; };
+      chip.addEventListener('pointerup', ()=>{ clear(); if(longed) return; state.heldItem = item; refreshInventoryUI(); render(); setMsg(`手持ち: ${displayName(item)}`); });
+      chip.addEventListener('pointercancel', clear);
+      chip.addEventListener('pointerleave', clear);
+      invList.appendChild(chip);
+    }
+    heldText.textContent = `手持ち: ${state.heldItem ? stackText(state.heldItem) : 'なし'}`;
+  }
+  function refreshCmdFavUI(){
+    cmdFavList.innerHTML = '';
+    if(!globalState.favoriteCmds.length){
+      const s = document.createElement('div');
+      s.className = 'small'; s.textContent = 'お気に入りコマンドはまだない。';
+      cmdFavList.appendChild(s); return;
+    }
+    for(const cmd of globalState.favoriteCmds){
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'favCmd'; btn.textContent = cmd;
+      let timer = null, longed = false;
+      btn.addEventListener('pointerdown', e => {
+        e.preventDefault(); longed = false;
+        timer = setTimeout(() => {
+          longed = true;
+          globalState.favoriteCmds = globalState.favoriteCmds.filter(v => v !== cmd);
+          saveGlobal();
+          refreshCmdFavUI();
+          setMsg('お気に入りコマンドを解除した。');
+        }, 500);
+      });
+      const clear = ()=>{ if(timer) clearTimeout(timer); timer = null; };
+      btn.addEventListener('pointerup', ()=>{ clear(); if(longed) return; runCommand(cmd); });
+      btn.addEventListener('pointercancel', clear);
+      btn.addEventListener('pointerleave', clear);
+      cmdFavList.appendChild(btn);
+    }
+  }
+
+  function ensureCraftGridSize(size){
+    if(state.craftGridSize === size) return;
+    for(const item of state.craftGrid){ if(item) addItem(item,1); }
+    state.craftGridSize = size;
+    state.craftGrid = Array(size*size).fill(null);
+  }
+  function craftGridIndex(x,y){ return y * state.craftGridSize + x; }
+  function recipeFits(recipe, grid){
+    const size = state.craftGridSize;
+    if(recipe.type === 'shapeless'){
+      const counts = {}; let filled = 0;
+      for(const item of grid){ if(!item) continue; counts[item] = (counts[item] || 0) + 1; filled++; }
+      const needKeys = Object.keys(recipe.need);
+      const needCount = needKeys.reduce((s,k)=>s + recipe.need[k], 0);
+      if(filled !== needCount) return false;
+      for(const k of needKeys){ if((counts[k] || 0) !== recipe.need[k]) return false; }
+      return true;
+    }
+    if(recipe.width > size || recipe.height > size) return false;
+    for(let oy=0; oy<=size-recipe.height; oy++){
+      for(let ox=0; ox<=size-recipe.width; ox++){
+        let ok = true;
+        for(let y=0; y<size && ok; y++){
+          for(let x=0; x<size; x++){
+            const idx = craftGridIndex(x,y);
+            const inside = x>=ox && x<ox+recipe.width && y>=oy && y<oy+recipe.height;
+            if(!inside){
+              if(grid[idx] !== null){ ok = false; break; }
+              continue;
+            }
+            const need = recipe.pattern[(y-oy)*recipe.width + (x-ox)];
+            if(need === null){ if(grid[idx] !== null){ ok = false; break; } }
+            else if(grid[idx] !== need){ ok = false; break; }
+          }
+        }
+        if(ok) return true;
+      }
+    }
+    return false;
+  }
+  function findMatchingRecipe(){
+    for(const recipe of RECIPES){ if(recipeFits(recipe, state.craftGrid)) return recipe; }
+    return null;
+  }
+  function craftEnabled(){ const t = currentTarget(); return getBlockAt(state.dim,t.x,t.y) === 'crafting_table'; }
+  function furnaceEnabled(){ const t = currentTarget(); return getBlockAt(state.dim,t.x,t.y) === 'furnace'; }
+
+  function refreshCraftUI(){
+    const size = craftEnabled() ? 3 : 2;
+    ensureCraftGridSize(size);
+    craftModeText.textContent = `現在: ${size}×${size}${craftEnabled() ? '（作業台の前）' : ''}`;
+    craftGridHolder.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'craftGridWrap';
+    grid.style.gridTemplateColumns = `repeat(${state.craftGridSize}, 54px)`;
+    grid.style.display = 'inline-grid';
+    for(let y=0; y<state.craftGridSize; y++){
+      for(let x=0; x<state.craftGridSize; x++){
+        const idx = craftGridIndex(x,y);
+        const slot = document.createElement('button');
+        slot.type = 'button';
+        const item = state.craftGrid[idx];
+        slot.className = 'slot' + (item ? ' has' : '');
+        slot.textContent = item ? (BLOCKS[item]?.icon || '■') : '＋';
+        if(item){
+          const sm = document.createElement('small');
+          sm.textContent = displayName(item);
+          slot.appendChild(sm);
+        }
+        slot.addEventListener('click', () => {
+          if(state.craftGrid[idx]){
+            const ret = state.craftGrid[idx];
+            state.craftGrid[idx] = null;
+            addItem(ret,1);
+            refreshAllMenus();
+            render();
+            return;
+          }
+          if(!state.heldItem){ setMsg('先に所持品を選んでね。'); return; }
+          if(!canCraftInput(state.heldItem)){ setMsg('それはクラフト材料にできない。'); return; }
+          if(count(state.heldItem) <= 0){ setMsg('そのアイテムが足りない。'); return; }
+          const placed = state.heldItem;
+          removeItem(placed,1);
+          state.craftGrid[idx] = placed;
+          refreshAllMenus();
+          render();
+        });
+        grid.appendChild(slot);
+      }
+    }
+    craftGridHolder.appendChild(grid);
+    const match = findMatchingRecipe();
+    if(match){
+      const giveText = Object.entries(match.give).map(([k,v]) => `${displayName(k)} ×${v}`).join(' ');
+      craftResultText.innerHTML = `合うレシピ: <strong>${match.title}</strong><br>できるもの: ${giveText}`;
+      craftDoBtn.disabled = false;
+    }else{
+      craftResultText.textContent = '合うレシピがない。';
+      craftDoBtn.disabled = true;
+    }
+  }
+
+  function getFurnaceState(w,x,y){
+    const k = `${x},${y}`;
+    if(!w.furnace.has(k)) w.furnace.set(k, { input:null, fuel:null, output:null });
+    return w.furnace.get(k);
+  }
+  function refreshFurnaceUI(){
+    const visible = furnaceEnabled();
+    furnaceSection.style.display = visible ? 'block' : 'none';
+    if(!visible) return;
+    const p = currentPos();
+    const w = world();
+    const f = getFurnaceState(w,p.x,p.y);
+    const paint = (el, stack) => {
+      if(stack && stack.item){
+        el.classList.add('has');
+        el.textContent = `${BLOCKS[stack.item]?.icon || '■'} ×${stack.count}`;
+      }else{
+        el.classList.remove('has');
+        el.textContent = '空';
+      }
+    };
+    fInputCount.textContent = f.input ? f.input.count : 0;
+    fFuelCount.textContent = f.fuel ? f.fuel.count : 0;
+    fOutCount.textContent = f.output ? f.output.count : 0;
+    paint(fInputItem,f.input); paint(fFuelItem,f.fuel); paint(fOutItem,f.output);
+    const inName = f.input ? displayName(f.input.item) : 'なし';
+    const fuelName = f.fuel ? displayName(f.fuel.item) : 'なし';
+    const outName = f.output ? displayName(f.output.item) : 'なし';
+    furnaceInfo.textContent = `入力: ${inName} / 燃料: ${fuelName} / 出力: ${outName}`;
+  }
+
+  function refreshCommandVisibility(){
+    cmdLockPrompt.style.display = state.cmdUnlocked ? 'none' : 'block';
+    cmdUnlockedBox.style.display = state.cmdUnlocked ? 'block' : 'none';
+    cmdInput.disabled = !state.cmdUnlocked;
+    refreshCmdFavUI();
+  }
+  function refreshAllMenus(){
+    normalizeHeld();
+    refreshInventoryUI();
+    if(invOverlay.classList.contains('open')){
+      refreshCraftUI();
+      refreshFurnaceUI();
+      refreshCommandVisibility();
+    }
+  }
+  function updateLayout(){
+    const safe = clamp(Math.floor((window.innerWidth - 16 - 6 * 4) / 7), 30, 72);
+    document.documentElement.style.setProperty('--cell-size', safe + 'px');
+  }
+  function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
+  function currentBlockPassable(block){ return PASSABLE.has(block); }
+
+  function killPlayer(){
+    const w = world();
+    const p = currentPos();
+    const deathBlock = getBlockAt(state.dim,p.x,p.y);
+    const corpseItems = {};
+    const loseAll = deathBlock === 'fire' || deathBlock === 'lava';
+    if(loseAll){
+      state.inventory = {};
+      state.infiniteItems = new Set();
+    }else if(!state.keepInventory){
+      for(const item of Object.keys(state.inventory)){
+        if(state.infiniteItems.has(item)) continue;
+        corpseItems[item] = state.inventory[item];
+      }
+      for(const item of Object.keys(corpseItems)) delete state.inventory[item];
+      w.corpses.set(`${p.x},${p.y}`, { x:p.x, y:p.y, items:corpseItems, age:0, claimAcc:0 });
+    }
+    state.pos[DIM.OVERWORLD] = {x:0,y:0};
+    state.dim = DIM.OVERWORLD;
+    state.facing = 1;
+    state.hp = 10; state.breath = 10;
+    state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
+    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
+    state.soulSlow = 0; state.prevBlock = 'empty'; state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
+    updateTheme(); normalizeHeld(); refreshAllMenus(); render();
+    setMsg('死んだ。Overworldの0に戻った。');
+  }
+
+  function setTimeCommand(arg){
+    const token = normText(arg);
+    if(!token){ setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return; }
+    const lower = token.toLowerCase();
+    if(token==='昼' || lower==='day'){ state.gameTime = 0; state.nightSpawnAcc = 0; render(); setMsg('時刻を昼にした。'); return; }
+    if(token==='夜' || lower==='night'){ state.gameTime = 720; state.nightSpawnAcc = 0; render(); setMsg('時刻を夜にした。'); return; }
+    const m = token.match(/^(\d{1,2}):(\d{2})$/);
+    if(!m){ setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return; }
+    let hh = parseInt(m[1],10);
+    const mm = parseInt(m[2],10);
+    if(Number.isNaN(hh) || Number.isNaN(mm) || mm < 0 || mm >= 60){
+      setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return;
+    }
+    hh = ((hh % 24) + 24) % 24;
+    state.gameTime = hh * 60 + mm;
+    state.nightSpawnAcc = 0;
+    render();
+    setMsg(`時刻を ${timeText()} にした。`);
+  }
+
+  function travelTo(targetDim){
+    if(targetDim !== DIM.OVERWORLD && targetDim !== DIM.NETHER) return;
+    const from = state.dim;
+    const src = currentPos();
+    const dest = { x:src.x, y:src.y };
+    state.dim = targetDim;
+    state.pos[targetDim] = dest;
+    setBlockAt(targetDim, dest.x, dest.y, 'nether_portal');
+    state.prevBlock = 'empty';
+    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
+    state.portalAcc = 0; state.portalRecentTravel = true; state.portalShake = 0.25;
+    updateTheme(); refreshAllMenus(); render();
+    setMsg(`${from === DIM.OVERWORLD ? 'Overworld' : 'Nether'} → ${targetDim === DIM.OVERWORLD ? 'Overworld' : 'Nether'} に移動した。`);
+  }
+
+  function runCommand(raw){
+    const text = normText(raw);
+    if(!text) return;
+    if(!state.cmdUnlocked){ setMsg('コマンドはロック中。'); return; }
+    const parts = text.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+
+    if(cmd === '/keepinventory'){
+      state.keepInventory = !state.keepInventory;
+      setMsg(`keepinventory = ${state.keepInventory ? 'ON' : 'OFF'}`);
+      return;
+    }
+    if(cmd === '/tp'){
+      const a = parseInt(parts[1],10);
+      if(Number.isNaN(a)){ setMsg('使い方: /tp 〈x座標〉 [y座標]'); return; }
+      if(parts.length >= 3){
+        const b = parseInt(parts[2],10);
+        if(Number.isNaN(b)){ setMsg('使い方: /tp 〈x座標〉 [y座標]'); return; }
+        state.pos[state.dim].x = a;
+        state.pos[state.dim].y = b;
+      }else{
+        state.pos[state.dim][activeAxis()] = a;
+      }
+      state.portalAcc = 0; setMsg(`/tp ${parts.slice(1).join(' ')}`); render(); return;
+    }
+    if(cmd === '/time'){ setTimeCommand(parts[1]); return; }
+    if(cmd === '/dim'){
+      if(!parts[1]){ travelTo(state.dim === DIM.OVERWORLD ? DIM.NETHER : DIM.OVERWORLD); return; }
+      const t = (parts[1] || '').toLowerCase();
+      if(t === 'overworld' || t === 'ow') travelTo(DIM.OVERWORLD);
+      else if(t === 'nether' || t === 'n') travelTo(DIM.NETHER);
+      else setMsg('使い方: /dim 〈overworld / nether〉');
+      return;
+    }
+
+    if(cmd === '/give'){
+      const body = text.slice(5).trim();
+      if(!body){ setMsg('使い方: /give 〈アイテム名〉 〈個数〉'); return; }
+      const toks = body.split(/\s+/);
+      let qtyToken = '1';
+      let itemToken = body;
+      if(toks.length >= 2){
+        const last = toks[toks.length - 1];
+        const qtyLooks = last === '∞' || last.toUpperCase() === 'INFINITY' || /^-?\d+$/.test(last);
+        if(qtyLooks){
+          qtyToken = last;
+          itemToken = toks.slice(0,-1).join(' ');
+        }
+      }
+      const target = parseGiveTarget(itemToken);
+      if(!target){ setMsg('そのアイテムは使えない。'); return; }
+      const inf = qtyToken === '∞' || qtyToken.toUpperCase() === 'INFINITY';
+      const n = inf ? Infinity : Math.max(1, parseInt(qtyToken,10) || 1);
+
+      if(target.kind === 'all'){
+        for(const item of ITEM_ORDER.filter(i => !i.endsWith('_alltools'))) addItem(item, n);
+        refreshAllMenus(); render();
+        setMsg(`全アイテムを${inf ? '∞個' : `${n}個ずつ`}手に入れた。`);
+        return;
+      }
+
+      addItem(target.id, n);
+      refreshAllMenus(); render();
+      setMsg(`/give ${displayName(target.id)} ${inf ? '∞' : n}`);
+      return;
+    }
+
+    if(cmd === '/spawn'){
+      const type = mobAlias(parts[1] || '');
+      const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
+      if(!type){ setMsg('使い方: /spawn 〈モブ名〉 〈数〉'); return; }
+      const spawned = spawnCommandMob(type, n);
+      refreshAllMenus(); render();
+      setMsg(`${displayName(type === 'zombie' ? 'zombie' : 'creeper')} を ${spawned} 体召喚した。`);
+      return;
+    }
+
+    if(cmd === '/setblock'){
+      const token = blockAlias(parts[1] || '');
+      const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
+      const p = currentPos();
+      for(let i=0;i<n;i++){
+        if(activeAxis()==='x') setBlockAt(state.dim, p.x + state.facing + i*state.facing, p.y, token === 'air' ? 'empty' : token);
+        else setBlockAt(state.dim, p.x, p.y + state.facing + i*state.facing, token === 'air' ? 'empty' : token);
+      }
+      refreshAllMenus(); updateTheme(); render();
+      setMsg(`/setblock ${parts[1] || ''} ${n}`);
+      return;
+    }
+
+    if(cmd === '/fill'){
+      const token = blockAlias(parts[1] || '');
+      const a = parseInt(parts[2],10);
+      const b = parseInt(parts[3],10);
+      if(Number.isNaN(a) || Number.isNaN(b)){ setMsg('使い方: /fill 〈ブロック名〉 〈初めの座標〉 〈終わりの座標〉'); return; }
+      const from = Math.min(a,b), to = Math.max(a,b);
+      const p = currentPos();
+      for(let c=from;c<=to;c++){
+        if(activeAxis()==='x') setBlockAt(state.dim, c, p.y, token === 'air' ? 'empty' : token);
+        else setBlockAt(state.dim, p.x, c, token === 'air' ? 'empty' : token);
+      }
+      refreshAllMenus(); updateTheme(); render();
+      setMsg(`/fill ${parts[1] || ''} ${from} ${to}`);
+      return;
+    }
+    setMsg('そのコマンドはまだ使えない。');
+  }
+
+  function updateNight(dt){
+    if(!isNight()) return;
+    state.nightSpawnAcc += dt;
+    while(state.nightSpawnAcc >= 1){
+      state.nightSpawnAcc -= 1;
+      if(Math.random() < 1/16) spawnNightMobNearPlayer();
+    }
+  }
+  function updatePortalTravel(dt){
+    const p = currentPos();
+    const onPortal = getBlockAt(state.dim,p.x,p.y) === 'nether_portal';
+    if(state.portalRecentTravel){
+      if(!onPortal) state.portalRecentTravel = false;
+      state.portalShake = Math.max(0, state.portalShake - dt * 0.45);
+      return;
+    }
+    if(onPortal){
+      state.portalAcc += dt;
+      state.portalShake = Math.min(1.3, state.portalShake + dt * 0.28);
+      if(state.portalAcc >= 5){
+        state.portalAcc = 0;
+        travelTo(state.dim === DIM.OVERWORLD ? DIM.NETHER : DIM.OVERWORLD);
+      }
+    }else{
+      state.portalAcc = 0;
+      state.portalShake = Math.max(0, state.portalShake - dt * 0.65);
+    }
+  }
+
+  function baseMineRate(mat){
+    if(mat==='wood') return 1/8;
+    if(mat==='stone') return 1/4;
+    if(mat==='iron') return 1/2;
+    if(mat==='gold') return 1;
+    if(mat==='diamond') return 1;
+    return 1/16;
+  }
+  function breakGoldIfNeeded(item, kind){
+    if(!item) return;
+    if(toolMaterialOf(item) === 'gold' && Math.random() < breakChanceOnUse(item, kind)) breakHeldTool(item);
+  }
+
+  function mineSpecialCobbleLike(block, tool, dim, x, y){
+    if(block === 'stone' && isShovelLike(tool)){
+      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
+      setBlockAt(dim,x,y,'empty');
+      addItem('cobblestone',1);
+      return { ok:true, mined:true, drop:'cobblestone', msg:'丸石を手に入れた。' };
+    }
+    if(block === 'cobblestone' && isShovelLike(tool)){
+      setBlockAt(dim,x,y,'empty');
+      if(Math.random() < 1/16) addItem('gravel',1);
+      return { ok:true, mined:true, drop:'gravel', msg:'砂利が出た。' };
+    }
+    return null;
+  }
+
+  function miningChance(block, item, inWater){
+    const mat = toolMaterialOf(item);
+    const tier = toolTierOf(item);
+    const type = toolTypeOf(item);
+
+    if(item === 'gold_alltools') return 1;
+    if(type === 'alltools'){
+      if(mat === 'wood') return 1/8;
+      if(mat === 'stone') return 1/4;
+      if(mat === 'iron') return 1/2;
+      if(mat === 'gold') return 1;
+      if(mat === 'diamond') return 1;
+      return 1/16;
+    }
+    if(block === 'tnt') return 1;
+    if(block === 'nether_portal') return 0;
+    if(block === 'water' || block === 'lava') return 0;
+    if(block === 'fire') return 1;
+
+    if(block === 'stone' || block === 'cobblestone'){
+      if(type === 'none') return 1/16;
+      if(!isPickLike(item) && !isShovelLike(item)) return 0;
+      return baseMineRate(mat);
+    }
+
+    const rule = mineRule(block);
+    if(!rule) return 1/16;
+    if(rule.tool === 'special') return 0;
+
+    const proper =
+      (rule.tool === 'shovel' && isShovelLike(item)) ||
+      (rule.tool === 'axe' && isAxeLike(item)) ||
+      (rule.tool === 'pickaxe' && isPickLike(item)) ||
+      (rule.tool === 'sword' && isSwordLike(item));
+
+    if(rule.tool !== 'any' && !proper) return isSoftMineBlock(block) ? 1/16 : 0;
+    if(rule.minTier && tier < rule.minTier) return 0;
+    let chance = baseMineRate(mat);
+    if(inWater) chance *= 0.5;
+    return chance;
+  }
+
+  function dropForBlock(block){
+    const rule = mineRule(block);
+    return rule ? (rule.drop || block) : block;
+  }
+
+  function updateHeatAndLiquids(dt){
+    const p = currentPos();
+    const block = getBlockAt(state.dim,p.x,p.y);
+    const nowFire = block === 'fire';
+    const nowLava = block === 'lava';
+    const nowWater = block === 'water';
+
+    if(nowWater){
+      state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0;
+    }
+    if(nowLava && state.prevBlock !== 'lava'){
+      hurtPlayer(2,'溶岩に入った。');
+      state.lavaAcc = 0;
+    }
+    if(state.prevBlock === 'fire' && !nowFire){ state.burnRemain = 5; state.burnAcc = 0; }
+    if(state.prevBlock === 'lava' && !nowLava){ state.burnRemain = 5; state.burnAcc = 0; }
+
+    if(nowFire){
+      state.fireAcc += dt;
+      while(state.fireAcc >= 0.5){
+        state.fireAcc -= 0.5;
+        hurtPlayer(0.5,'火でダメージを受けた。');
+      }
+    }else state.fireAcc = 0;
+
+    if(nowLava){
+      state.lavaAcc += dt;
+      while(state.lavaAcc >= 0.1){
+        state.lavaAcc -= 0.1;
+        if(Math.random() < 0.5) hurtPlayer(0.5,'溶岩でダメージを受けた。');
+      }
+    }else state.lavaAcc = 0;
+
+    if(!nowFire && !nowLava && state.burnRemain > 0){
+      state.burnAcc += dt;
+      while(state.burnAcc >= 1 && state.burnRemain > 0){
+        state.burnAcc -= 1;
+        state.burnRemain -= 1;
+        hurtPlayer(0.5,'熱でダメージを受けた。');
+      }
+    }
+    state.prevBlock = block;
+  }
+
+  function isProperTargetForTool(block,item){
+    if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire') return false;
+    if(block === 'nether_portal') return false;
+    if(block === 'cobblestone' && isShovelLike(item)) return true;
+    const rule = mineRule(block);
+    if(!rule) return false;
+    if(rule.tool === 'any') return true;
+    if(rule.tool === 'shovel') return isShovelLike(item);
+    if(rule.tool === 'axe') return isAxeLike(item);
+    if(rule.tool === 'pickaxe') return isPickLike(item);
+    if(rule.tool === 'sword') return isSwordLike(item);
+    return false;
+  }
+
+  function mineOne(dim,x,y,tool,inWater,forceAll=false){
+    const block = getBlockAt(dim,x,y);
+    if(block === 'empty') return { ok:false, mined:false };
+    if(block === 'nether_portal') return { ok:false, mined:false, msg:'ネザーゲートブロックはTNTでしか壊せない。' };
+    if(block === 'water' || block === 'lava') return { ok:false, mined:false, msg:'液体は掘れない。' };
+    if(block === 'fire'){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'炎を消した。' }; }
+
+    if((block === 'stone' || block === 'cobblestone') && toolTypeOf(tool) === 'none'){
+      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
+      setBlockAt(dim,x,y,'empty');
+      return { ok:true, mined:true, msg:'石を砕いた。' };
+    }
+    if(block === 'cobblestone' || block === 'gravel' || block === 'stone'){
+      const sp = mineSpecialCobbleLike(block,tool,dim,x,y);
+      if(sp) return sp;
+    }
+    if(block === 'tnt'){
+      setBlockAt(dim,x,y,'empty');
+      addItem('tnt',1);
+      return { ok:true, mined:true, drop:'tnt', msg:'TNTを手に入れた。' };
+    }
+    if(block === 'obsidian' && !forceAll){
+      const chance = miningChance(block,tool,inWater);
+      if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
+      if(Math.random() > chance) return { ok:false, mined:false, msg:'硬すぎる。' };
+      setBlockAt(dim,x,y,'empty');
+      addItem('obsidian',1);
+      return { ok:true, mined:true, drop:'obsidian', msg:'黒曜石を手に入れた。' };
+    }
+
+    const rule = mineRule(block);
+    if(!rule){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'壊した。' }; }
+
+    const chance = miningChance(block,tool,inWater);
+    if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
+    if(Math.random() > chance) return { ok:false, mined:false, msg:'空振りした。' };
+
+    setBlockAt(dim,x,y,'empty');
+    const dropItem = rule.drop || block;
+    if(dropItem && block !== 'water' && block !== 'lava' && block !== 'fire') addItem(dropItem,1);
+    if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
+    return { ok:true, mined:true, drop:dropItem, msg:`${displayName(dropItem || block)} を手に入れた。` };
+  }
+
+  function attackEnemy(m){
+    if(state.attackCd > 0){ setMsg('まだ殴れない。'); return; }
+    const dmg = swordDamage(state.heldItem);
+    m.hp -= dmg;
+    state.attackCd = 1;
+    breakGoldIfNeeded(state.heldItem,'attack');
+    if(m.hp <= 0){
+      m.dead = true;
+      if(m.type === 'creeper') addItem('gunpowder', 1 + (Math.random()<0.5 ? 1 : 0));
+      setMsg(`${m.type === 'zombie' ? 'ゾンビ' : 'クリーパー'}を倒した。`);
+    }else{
+      if(Math.random() < 0.5){
+        const p = currentPos();
+        const away = state.dim===DIM.OVERWORLD ? Math.sign(m.x - p.x) || state.facing : Math.sign(m.y - p.y) || state.facing;
+        if(state.dim===DIM.OVERWORLD){
+          const nx = Math.round(m.x + away);
+          if(PASSABLE.has(getBlockAt(state.dim,nx,m.y))) m.x += away;
+        }else{
+          const ny = Math.round(m.y + away);
+          if(PASSABLE.has(getBlockAt(state.dim,m.x,ny))) m.y += away;
+        }
+      }
+      setMsg(`${m.type === 'zombie' ? 'ゾンビ' : 'クリーパー'}に${dmg}ダメージ。`);
+    }
+    refreshAllMenus(); render();
+  }
+
+  function mine(){
+    const targetMob = enemyAtTarget();
+    if(targetMob){ attackEnemy(targetMob); return; }
+
+    const p = currentPos();
+    const t = currentTarget();
+    const inWater = getBlockAt(state.dim,p.x,p.y) === 'water';
+    const held = state.heldItem;
+    const mat = toolMaterialOf(held);
+    const type = toolTypeOf(held);
+
+    if(held === 'gold_alltools'){
+      let cx = t.x, cy = t.y, firstMsg = null;
+      while(getBlockAt(state.dim,cx,cy) !== 'empty'){
+        const res = mineOne(state.dim,cx,cy,held,inWater,true);
+        if(!res.ok) break;
+        if(!firstMsg && res.msg) firstMsg = res.msg;
+        if(activeAxis()==='x') cx += state.facing;
+        else cy += state.facing;
+      }
+      breakGoldIfNeeded(held,'mine');
+      refreshAllMenus(); render(); setMsg(firstMsg || '掘った。');
+      return;
+    }
+
+    if(mat === 'gold' && (type === 'pickaxe' || type === 'axe' || type === 'shovel' || type === 'alltools')){
+      let cx = t.x, cy = t.y, firstMsg = null;
+      while(getBlockAt(state.dim,cx,cy) !== 'empty' && isProperTargetForTool(getBlockAt(state.dim,cx,cy), held)){
+        const res = mineOne(state.dim,cx,cy,held,inWater,false);
+        if(!res.ok) break;
+        if(!firstMsg && res.msg) firstMsg = res.msg;
+        if(activeAxis()==='x') cx += state.facing;
+        else cy += state.facing;
+      }
+      breakGoldIfNeeded(held,'mine');
+      refreshAllMenus(); render(); setMsg(firstMsg || '掘った。');
+      return;
+    }
+
+    const res = mineOne(state.dim,t.x,t.y,held,inWater,false);
+    if(!res.ok){ setMsg(res.msg || '空振りした。'); return; }
+    breakGoldIfNeeded(held,'mine');
+    refreshAllMenus(); render();
+    setMsg(res.msg || `${displayName(res.drop || getBlockAt(state.dim,t.x,t.y))} を手に入れた。`);
+  }
+
+  function scoopBucket(targetBlock){
+    if(state.heldItem !== 'bucket') return false;
+    const t = currentTarget();
+    if(targetBlock === 'water'){
+      setBlockAt(state.dim,t.x,t.y,'empty');
+      removeItem('bucket',1); addItem('water_bucket',1);
+      return true;
+    }
+    if(targetBlock === 'lava'){
+      setBlockAt(state.dim,t.x,t.y,'empty');
+      removeItem('bucket',1); addItem('lava_bucket',1);
+      return true;
+    }
+    return false;
+  }
+
+  function placeOrUse(){
+    const t = currentTarget();
+    const block = getBlockAt(state.dim,t.x,t.y);
+
+    if(state.heldItem === 'bucket' && (block === 'water' || block === 'lava')){
+      if(scoopBucket(block)){
+        refreshAllMenus(); render();
+        setMsg(block === 'water' ? '水をすくった。' : '溶岩をすくった。');
+      }
+      return;
+    }
+
+    if(state.heldItem === 'air_item'){
+      if(block === 'empty'){ setMsg('もう無だ。'); return; }
+      setBlockAt(state.dim,t.x,t.y,'empty');
+      removeItem('air_item',1);
+      refreshAllMenus(); render();
+      setMsg('無に置き換えた。');
+      return;
+    }
+
+    if(state.heldItem === 'water_bucket' || state.heldItem === 'lava_bucket'){
+      const liquid = state.heldItem === 'water_bucket' ? 'water' : 'lava';
+
+      if(state.dim === DIM.NETHER && state.heldItem === 'water_bucket'){
+        removeItem('water_bucket',1);
+        addItem('bucket',1);
+        setMsg('水は蒸発した。');
+        render();
+        return;
+      }
+
+      if(block === 'water' || block === 'lava'){
+        if(block !== liquid){
+          setBlockAt(state.dim,t.x,t.y,'obsidian');
+          removeItem(state.heldItem,1);
+          addItem('bucket',1);
+          refreshAllMenus(); render();
+          setMsg('黒曜石ができた。');
+          return;
+        }
+      }
+
+      if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire' || block === 'dirt' || block === 'grass' || block === 'wood' || block === 'leaf' || block === 'stone' || block === 'sand' || block === 'plank' || block === 'crafting_table' || block === 'furnace' || block === 'netherrack' || block === 'obsidian' || block === 'cobblestone' || block === 'soul_sand' || block === 'ancient_debris'){
+        setBlockAt(state.dim,t.x,t.y,liquid);
+        removeItem(state.heldItem,1);
+        addItem('bucket',1);
+        refreshAllMenus(); render();
+        setMsg(`${displayName(liquid)} を置いた。`);
+        return;
+      }
+
+      setMsg('そこには置けない。');
+      return;
+    }
+
+    if(state.heldItem === 'flint_and_steel'){
+      if(block === 'obsidian'){
+        setBlockAt(state.dim,t.x,t.y,'nether_portal');
+        refreshAllMenus(); render();
+        setMsg('ネザーゲートを起動した。');
+        return;
+      }
+      if(block === 'tnt'){
+        const w = world();
+        w.tnt.set(`${t.x},${t.y}`, {lit:true, age:0});
+        setMsg('TNTに火をつけた。');
+        render();
+        return;
+      }
+      if(block === 'empty'){
+        setBlockAt(state.dim,t.x,t.y,'fire');
+        refreshAllMenus(); render();
+        setMsg('火をつけた。');
+        return;
+      }
+      setMsg('そこでは使えない。');
+      return;
+    }
+
+    if(state.heldItem === 'nether_portal'){
+      if(block === 'empty'){
+        setBlockAt(state.dim,t.x,t.y,'nether_portal');
+        removeItem('nether_portal',1);
+        refreshAllMenus(); render();
+        setMsg('ネザーゲートブロックを置いた。');
+      }else setMsg('そこには置けない。');
+      return;
+    }
+
+    if(state.heldItem === 'tnt'){
+      if(block === 'empty'){
+        setBlockAt(state.dim,t.x,t.y,'tnt');
+        removeItem('tnt',1);
+        refreshAllMenus(); render();
+        setMsg('TNTを置いた。');
+      }else setMsg('そこには置けない。');
+      return;
+    }
+
+    if(!state.heldItem){ setMsg('手持ちがない。'); return; }
+
+    if(canPlaceable(state.heldItem) && block === 'empty'){
+      const placed = state.heldItem;
+      setBlockAt(state.dim,t.x,t.y,placed);
+      removeItem(placed,1);
+      refreshAllMenus(); render();
+      setMsg(`${displayName(placed)} を置いた。`);
+      return;
+    }
+
+    setMsg('それは置けない。');
+  }
+
+  function craftFromGrid(){
+    const recipe = findMatchingRecipe();
+    if(!recipe){ setMsg('合うレシピがない。'); return; }
+    state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
+    for(const [item,n] of Object.entries(recipe.give)) addItem(item,n);
+    refreshAllMenus(); render();
+    setMsg(`${recipe.title} を作った。`);
+  }
+  function clearCraftGrid(){
+    for(const item of state.craftGrid){ if(item) addItem(item,1); }
+    state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
+    refreshAllMenus(); render();
+    setMsg('クラフト欄を全部消した。');
+  }
+
+  function fuelChance(fuelItem){
+    if(fuelItem === 'coal') return 0.5;
+    if(fuelItem === 'wood') return 1/32;
+    return 0;
+  }
+  function collectOutput(){
+    const p = currentPos();
+    const f = getFurnaceState(world(),p.x,p.y);
+    if(!f.output){ setMsg('出力は空。'); return; }
+    addItem(f.output.item, f.output.count);
+    f.output = null;
+    refreshAllMenus(); render();
+    setMsg('できあがりを回収した。');
+  }
+  function furnaceTakeOrPut(slotName){
+    const p = currentPos();
+    const f = getFurnaceState(world(),p.x,p.y);
+    if(slotName === 'output'){ collectOutput(); return; }
+    if(f[slotName]){
+      const item = f[slotName].item;
+      f[slotName].count -= 1;
+      if(f[slotName].count <= 0) f[slotName] = null;
+      addItem(item,1);
+      refreshAllMenus(); render();
+      return;
+    }
+    if(!state.heldItem){ setMsg('先に所持品を選んでね。'); return; }
+    const valid = slotName === 'input'
+      ? ['cobblestone','raw_iron','raw_gold','ancient_debris'].includes(state.heldItem)
+      : slotName === 'fuel'
+        ? ['coal','wood'].includes(state.heldItem)
+        : false;
+    if(!valid){ setMsg(slotName === 'input' ? 'そのアイテムは入力できない。' : 'そのアイテムは燃料にできない。'); return; }
+    const item = state.heldItem;
+    if(!f[slotName]){
+      f[slotName] = { item, count:1 };
+      removeItem(item,1);
+    }else if(f[slotName].item === item){
+      f[slotName].count += 1;
+      removeItem(item,1);
+    }else{
+      setMsg('そのスロットには別のアイテムが入っている。');
+      return;
+    }
+    refreshAllMenus(); render();
+  }
+  function smeltOnce(){
+    if(!furnaceEnabled()){ setMsg('かまどの前で使ってね。'); return; }
+    const p = currentPos();
+    const f = getFurnaceState(world(),p.x,p.y);
+    if(!f.input){ setMsg('物を入れるところが空。'); return; }
+    if(!f.fuel){ setMsg('燃料がない。'); return; }
+    const inputItem = f.input.item;
+    const outItem = { cobblestone:'stone', raw_iron:'iron_ingot', raw_gold:'gold_ingot', ancient_debris:'ancient_debris' }[inputItem];
+    if(!outItem){ setMsg('それは精錬できない。'); return; }
+    const chance = fuelChance(f.fuel.item);
+    if(chance <= 0){ setMsg('その燃料は使えない。'); return; }
+    if(f.output && f.output.item !== outItem){ setMsg('出力欄に別のものが入っている。'); return; }
+    f.fuel.count -= 1;
+    if(f.fuel.count <= 0) f.fuel = null;
+    const success = Math.random() < chance;
+    if(success){
+      if(!f.output) f.output = { item:outItem, count:0 };
+      f.output.count += 1;
+      f.input.count -= 1;
+      if(f.input.count <= 0) f.input = null;
+      setMsg(`${displayName(outItem)} ができた。`);
+    }else setMsg('精錬に失敗した。');
+    refreshAllMenus(); render();
+  }
+
+  function openInv(){
+    invOverlay.classList.add('open');
+    invOverlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    refreshAllMenus();
+    updateLayout();
+    requestAnimationFrame(() => { tabContent.scrollTop = 0; invPanel.scrollTop = 0; });
+  }
+  function closeInv(){
+    invOverlay.classList.remove('open');
+    invOverlay.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+  }
+
+  let confirmState = { onYes:null, onNo:null };
+  function openConfirm(text, onYes, onNo, yesLabel='はい', noLabel='いいえ'){
+    confirmState.onYes = onYes || null;
+    confirmState.onNo = onNo || null;
+    confirmText.textContent = text;
+    confirmYes.textContent = yesLabel;
+    confirmNo.textContent = noLabel;
+    confirmOverlay.classList.add('open');
+  }
+  function closeConfirm(){
+    confirmOverlay.classList.remove('open');
+    confirmState.onYes = null;
+    confirmState.onNo = null;
+  }
+
+  function move(dx){
+    state.facing = dx < 0 ? -1 : 1;
+    if(state.soulSlow > 0 && Math.random() < 0.5){ setMsg('足元が重い。'); render(); return; }
+    const p = currentPos();
+    const nx = activeAxis()==='x' ? p.x + dx : p.x;
+    const ny = activeAxis()==='y' ? p.y + dx : p.y;
+    const b = getBlockAt(state.dim,nx,ny);
+    if(b !== 'empty' && !currentBlockPassable(b)){ setMsg(`当たり判定: ${displayName(b)} がある。`); render(); return; }
+    p.x = nx; p.y = ny;
+    setMsg(`${activeAxis()} = ${activeCoord()}`);
+    render();
+  }
+
+  function render(){
+    const p = currentPos();
+    const w = world();
+    line.innerHTML = '';
+    const start = activeCoord() - 3;
+    const fixed = fixedCoord();
+
+    for(let i=0;i<7;i++){
+      const c = start + i;
+      const x = activeAxis()==='x' ? c : fixed;
+      const y = activeAxis()==='x' ? fixed : c;
+      const block = getBlockAt(state.dim,x,y);
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + block;
+
+      if(block === 'fire'){
+        cell.textContent = ((Math.floor((w.fire.get(`${x},${y}`) || 0) * 8) % 2 === 0) ? '🔥' : '✦');
+      }else if(block === 'tnt'){
+        const info = normalizeTntValue(w.tnt.get(`${x},${y}`));
+        cell.textContent = info.lit ? (Math.floor(info.age * 10) % 2 === 0 ? '💣' : 'T') : 'T';
+      }else{
+        cell.textContent = BLOCKS[block]?.icon || '';
+      }
+
+      if(x === currentTarget().x && y === currentTarget().y) cell.classList.add('frontTarget');
+
+      const corpse = w.corpses.get(`${x},${y}`);
+      if(corpse) cell.classList.add('grave');
+
+      const mobsHere = mobsInCell(x,y);
+      const mob = mobsHere.length ? mobsHere[0] : null;
+      if(mob){
+        const mobMark = document.createElement('div');
+        mobMark.className = 'playerMark';
+        mobMark.textContent = mob.type === 'zombie' ? '🧟' : (mob.ignited ? '💥' : '👾');
+        cell.appendChild(mobMark);
+      }
+
+      if(corpse){
+        const gr = document.createElement('div');
+        gr.className = 'graveBadge';
+        gr.textContent = `☠ ${Math.max(0, Math.ceil(300 - corpse.age))}`;
+        cell.appendChild(gr);
+      }
+
+      if(!mob && x===p.x && y===p.y){
+        cell.classList.add('player');
+        const mark = document.createElement('div');
+        mark.className = 'playerMark';
+        mark.textContent = '🙂';
+        cell.appendChild(mark);
+        const badge = document.createElement('div');
+        badge.className = 'faceBadge';
+        badge.textContent = state.facing === 1 ? '▶' : '◀';
+        cell.appendChild(badge);
+      }
+
+      line.appendChild(cell);
+    }
+
+    const breathLine = state.breath < state.maxBreath ? `<br>呼吸 ${fmtHalf(state.breath)}/${state.maxBreath}` : '';
+    posText.innerHTML =
+      `${state.dim === DIM.OVERWORLD ? 'Overworld' : 'Nether'} ${activeAxis()} = ${activeCoord()}<br>` +
+      `向き <span class="dirStrong">${state.facing === -1 ? '←' : '→'}</span> / 手持ち ${state.heldItem ? stackText(state.heldItem) : 'なし'}<br>` +
+      `体力 ${fmtHalf(state.hp)}/${state.maxHp}${breathLine}<br>` +
+      `${timeText()}`;
+
+    updateMineButtonLabel();
+    placeBtn.textContent = '置く';
+
+    if(invOverlay.classList.contains('open')){
+      refreshCraftUI();
+      refreshFurnaceUI();
+      refreshCommandVisibility();
+    }
+    updateTheme();
+
+    if(state.portalShake > 0){
+      const t = state.now;
+      const amp = 1 + state.portalShake * 14;
+      const x = Math.sin(t / 63) * amp + Math.sin(t / 17) * (amp * 0.35);
+      const y = Math.cos(t / 71) * amp + Math.cos(t / 29) * (amp * 0.35);
+      const rot = Math.sin(t / 85) * state.portalShake * 1.6;
+      appEl.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`;
+    }else{
+      appEl.style.transform = '';
+    }
+  }
+
+  function snapshotGame(){
+    return {
+      version:1,
+      dim:state.dim,
+      pos:deep(state.pos),
+      facing:state.facing,
+      hp:state.hp, maxHp:state.maxHp,
+      breath:state.breath, maxBreath:state.maxBreath,
+      regenAcc:state.regenAcc, downedAcc:state.downedAcc, attackCd:state.attackCd,
+      fireAcc:state.fireAcc, lavaAcc:state.lavaAcc, burnRemain:state.burnRemain, burnAcc:state.burnAcc, waterDamageAcc:state.waterDamageAcc,
+      soulSlow:state.soulSlow, prevBlock:state.prevBlock,
+      gameTime:state.gameTime, nightSpawnAcc:state.nightSpawnAcc, portalAcc:state.portalAcc, portalRecentTravel:state.portalRecentTravel, portalShake:state.portalShake,
+      inventory:deep(state.inventory), infiniteItems:[...state.infiniteItems], heldItem:state.heldItem,
+      keepInventory:state.keepInventory, cmdUnlocked:state.cmdUnlocked,
+      craftGridSize:state.craftGridSize, craftGrid:deep(state.craftGrid),
+      inventorySearch:state.inventorySearch, favoriteItems:deep(state.favoriteItems),
+      worlds:{ overworld:serializeWorld(worlds[DIM.OVERWORLD]), nether:serializeWorld(worlds[DIM.NETHER]) }
+    };
+  }
+  function applySnapshot(data){
+    if(!data) return;
+    state.dim = data.dim || DIM.OVERWORLD;
+    state.pos = data.pos || state.pos;
+    state.facing = data.facing ?? 1;
+    state.hp = data.hp ?? 10; state.maxHp = data.maxHp ?? 10;
+    state.breath = data.breath ?? 10; state.maxBreath = data.maxBreath ?? 10;
+    state.regenAcc = data.regenAcc ?? 0; state.downedAcc = data.downedAcc ?? 0; state.attackCd = data.attackCd ?? 0;
+    state.fireAcc = data.fireAcc ?? 0; state.lavaAcc = data.lavaAcc ?? 0; state.burnRemain = data.burnRemain ?? 0; state.burnAcc = data.burnAcc ?? 0; state.waterDamageAcc = data.waterDamageAcc ?? 0;
+    state.soulSlow = data.soulSlow ?? 0; state.prevBlock = data.prevBlock ?? 'empty';
+    state.gameTime = data.gameTime ?? 0; state.nightSpawnAcc = data.nightSpawnAcc ?? 0;
+    state.portalAcc = data.portalAcc ?? 0; state.portalRecentTravel = !!data.portalRecentTravel; state.portalShake = data.portalShake ?? 0;
+    state.inventory = data.inventory || {}; state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
+    state.keepInventory = !!data.keepInventory; state.cmdUnlocked = !!data.cmdUnlocked;
+    state.craftGridSize = data.craftGridSize || 2; state.craftGrid = data.craftGrid || Array(state.craftGridSize * state.craftGridSize).fill(null);
+    state.inventorySearch = data.inventorySearch || ''; state.favoriteItems = data.favoriteItems || [];
+    const w = data.worlds || {};
+    worlds[DIM.OVERWORLD] = deserializeWorld(w.overworld, DIM.OVERWORLD);
+    worlds[DIM.NETHER] = deserializeWorld(w.nether, DIM.NETHER);
+    clearLineCaches();
+    updateTheme();
+    normalizeHeld();
+  }
+
+  function saveSaveSlots(){ saveJSON(SAVE_KEY, saves); }
+
+  function renderWorldList(){
+    worldGrid.innerHTML = '';
+    if(!saves.length){
+      const empty = document.createElement('div');
+      empty.className = 'small';
+      empty.textContent = '保存済みワールドはまだない。';
+      worldGrid.appendChild(empty);
+      createWorldBtn.style.display = 'inline-flex';
+      return;
+    }
+    createWorldBtn.style.display = saves.length < 10 ? 'inline-flex' : 'none';
+    saves.forEach(slot => {
+      const card = document.createElement('div');
+      card.className = 'worldCard';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'worldThumb';
+      if(slot.image){
+        const img = document.createElement('img');
+        img.src = slot.image;
+        thumb.appendChild(img);
+      }
+      const ph = document.createElement('div');
+      ph.className = 'ph';
+      ph.textContent = slot.name || '無題のワールド';
+      thumb.appendChild(ph);
+
+      const row = document.createElement('div');
+      row.className = 'worldHeaderRow';
+      if(activeSaveId === slot.id){
+        const b = document.createElement('span');
+        b.className = 'badge';
+        b.textContent = '現在';
+        row.appendChild(b);
+      }
+      const dimBadge = document.createElement('span');
+      dimBadge.className = 'badge';
+      dimBadge.textContent = (slot.data?.dim === DIM.NETHER) ? 'Nether' : 'Overworld';
+      row.appendChild(dimBadge);
+
+      const name = document.createElement('div');
+      name.className = 'worldName';
+      name.textContent = slot.name || '無題のワールド';
+
+      const meta = document.createElement('div');
+      meta.className = 'worldMeta';
+      const ts = slot.updatedAt ? new Date(slot.updatedAt).toLocaleString() : '—';
+      meta.textContent = `更新: ${ts}`;
+
+      const actions = document.createElement('div');
+      actions.className = 'worldActions';
+
+      const open = document.createElement('button');
+      open.className = 'loadBtn';
+      open.textContent = '開く';
+      open.addEventListener('click', () => loadWorldById(slot.id));
+
+      const rename = document.createElement('button');
+      rename.className = 'miniBtn';
+      rename.textContent = '名前変更';
+      rename.addEventListener('click', () => {
+        const next = prompt('ワールド名', slot.name || '無題のワールド');
+        if(next === null) return;
+        slot.name = next.trim() || slot.name || '無題のワールド';
+        slot.updatedAt = Date.now();
+        saveSaveSlots();
+        renderWorldList();
+      });
+
+      const imgBtn = document.createElement('button');
+      imgBtn.className = 'miniBtn';
+      imgBtn.textContent = '画像';
+      imgBtn.addEventListener('click', () => {
+        worldImageInput.dataset.target = slot.id;
+        worldImageInput.click();
+      });
+
+      const dup = document.createElement('button');
+      dup.className = 'miniBtn';
+      dup.textContent = '複製';
+      dup.addEventListener('click', () => duplicateWorld(slot.id));
+
+      const del = document.createElement('button');
+      del.className = 'dangerBtn';
+      del.textContent = '削除';
+      del.addEventListener('click', () => {
+        openConfirm(
+          `「${slot.name || '無題のワールド'}」を削除する？`,
+          () => {
+            const idx = saves.findIndex(s => s.id === slot.id);
+            if(idx >= 0) saves.splice(idx,1);
+            if(activeSaveId === slot.id) activeSaveId = null;
+            saveSaveSlots();
+            renderWorldList();
+            if(!saves.length){
+              closeWorldListPanel();
+              startFreshWorld();
+            }
+          },
+          null,
+          '削除する',
+          'やめる'
+        );
+      });
+
+      actions.append(open,rename,imgBtn,dup,del);
+      card.append(row,thumb,name,meta,actions);
+      worldGrid.appendChild(card);
+    });
+  }
+  function openWorldListPanel(){
+    renderWorldList();
+    worldOverlay.classList.add('open');
+    worldOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeWorldListPanel(){
+    worldOverlay.classList.remove('open');
+    worldOverlay.setAttribute('aria-hidden','true');
+  }
+  function loadWorldById(id){
+    const slot = saves.find(s => s.id === id);
+    if(!slot) return;
+    applySnapshot(slot.data);
+    activeSaveId = id;
+    closeWorldListPanel();
+    refreshAllMenus(); render();
+    setMsg(`「${slot.name || '無題のワールド'}」を開いた。`);
+  }
+  function duplicateWorld(id){
+    if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
+    const slot = saves.find(s => s.id === id);
+    if(!slot) return;
+    const copy = deep(slot);
+    copy.id = uid();
+    copy.name = `${copy.name || '無題のワールド'} (copy)`;
+    copy.updatedAt = Date.now();
+    copy.data = deep(slot.data);
+    saves.push(copy);
+    saveSaveSlots();
+    renderWorldList();
+  }
+  function startFreshWorld(){
+    worlds[DIM.OVERWORLD] = makeWorld(DIM.OVERWORLD);
+    worlds[DIM.NETHER] = makeWorld(DIM.NETHER);
+    clearLineCaches();
+    state.dim = DIM.OVERWORLD;
+    state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
+    state.facing = 1;
+    state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
+    state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
+    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
+    state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
+    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0; state.keepInventory = false; state.cmdUnlocked = false;
+    state.craftGridSize = 2; state.craftGrid = Array(4).fill(null);
+    buildSpawnArea(); ensureSpawnResources(); normalizeHeld(); updateTheme(); refreshAllMenus(); render();
+    setMsg('新しい世界を作った。');
+  }
+
+  function saveCurrentWorld(){
+    const snap = snapshotGame();
+    const existing = saves.find(s => s.id === activeSaveId);
+    const name = existing?.name || `ワールド ${saves.length + 1}`;
+    if(activeSaveId){
+      const idx = saves.findIndex(s => s.id === activeSaveId);
+      if(idx >= 0) saves[idx] = { ...saves[idx], name, data:snap, updatedAt:Date.now() };
+    }else{
+      if(saves.length >= 10){ setMsg('セーブは10個まで。'); return false; }
+      const slot = { id:uid(), name, image:'', data:snap, updatedAt:Date.now() };
+      saves.push(slot);
+      activeSaveId = slot.id;
+    }
+    saveSaveSlots();
+    setMsg('セーブしました！終了して一覧を開きますか？');
+    openConfirm(
+      'セーブしました！終了して一覧を開きますか？',
+      () => openWorldListPanel(),
+      null,
+      'はい',
+      'いいえ'
+    );
+    return true;
+  }
+  function saveWorldToSlotImageFromInput(file){
+    const id = worldImageInput.dataset.target;
+    if(!id || !file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const slot = saves.find(s => s.id === id);
+      if(!slot) return;
+      slot.image = String(reader.result || '');
+      slot.updatedAt = Date.now();
+      saveSaveSlots();
+      renderWorldList();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function addLongPress(el,onTap,onLong){
+    let timer = null;
+    let longed = false;
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      longed = false;
+      timer = setTimeout(() => { longed = true; onLong(); }, 500);
+    });
+    const clear = () => { if(timer) clearTimeout(timer); timer = null; };
+    el.addEventListener('pointerup', () => { clear(); if(!longed) onTap(); });
+    el.addEventListener('pointercancel', clear);
+    el.addEventListener('pointerleave', clear);
+  }
+
+  function updateTheme(){
+    document.body.style.background = state.dim === DIM.NETHER ? 'linear-gradient(#3b1111,#1a0606)' : 'linear-gradient(#171b25,#0f1218)';
+  }
+
+  function refreshCommandVisibility(){
+    cmdLockPrompt.style.display = state.cmdUnlocked ? 'none' : 'block';
+    cmdUnlockedBox.style.display = state.cmdUnlocked ? 'block' : 'none';
+    cmdInput.disabled = !state.cmdUnlocked;
+    refreshCmdFavUI();
+  }
+  function refreshAllMenus(){
+    normalizeHeld();
+    refreshInventoryUI();
+    if(invOverlay.classList.contains('open')){
+      refreshCraftUI();
+      refreshFurnaceUI();
+      refreshCommandVisibility();
+    }
+  }
+  function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
+
+  function init(){
+    buildSpawnArea();
+    ensureSpawnResources();
+    updateLayout();
+    updateTheme();
+    if(saves.length > 0){ startFreshWorld(); openWorldListPanel(); }
+    else{ startFreshWorld(); }
+    refreshAllMenus();
+    refreshCommandVisibility();
+    updateMineButtonLabel();
+    render();
+    setMsg('準備完了。');
+    requestAnimationFrame(tick);
+  }
+
+  function tick(now){
+    if(!tick.last) tick.last = now;
+    const dt = Math.min(0.05, (now - tick.last) / 1000);
+    tick.last = now;
+    state.now = now;
+    state.gameTime += dt;
+    state.soulSlow = Math.max(0, state.soulSlow - dt);
+    if(state.attackCd > 0) state.attackCd = Math.max(0, state.attackCd - dt);
+    updateNight(dt);
+    updateMobs(dt);
+    updateCorpses(dt);
+    updateTimedBlocks(dt);
+    updateHeatAndLiquids(dt);
+    updateBreath(dt);
+    updatePlayerHealth(dt);
+    updatePortalTravel(dt);
+    updateMineButtonLabel();
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('controls').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const act = btn.dataset.act;
+    if(act === 'left') move(-1);
+    if(act === 'right') move(1);
+    if(act === 'mine') mine();
+    if(act === 'place') placeOrUse();
+    if(act === 'inventory') openInv();
+  });
+
+  $('closeInv').addEventListener('click', closeInv);
+  invOverlay.addEventListener('click', e => { if(e.target === invOverlay) closeInv(); });
+
+  invSearch.addEventListener('input', () => {
+    state.inventorySearch = invSearch.value || '';
+    refreshInventoryUI();
+  });
+  searchClearBtn.addEventListener('click', () => {
+    state.inventorySearch = '';
+    invSearch.value = '';
+    refreshInventoryUI();
+    invSearch.focus();
+  });
+
+  craftDoBtn.addEventListener('click', craftFromGrid);
+  craftClearBtn.addEventListener('click', clearCraftGrid);
+  smeltBtn.addEventListener('click', smeltOnce);
+
+  document.querySelectorAll('.fSlot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      if(!furnaceEnabled()) return;
+      furnaceTakeOrPut(slot.dataset.fslot);
+    });
+  });
+
+  unlockCmdBtn.addEventListener('click', () => {
+    openConfirm(
+      'コマンドのロックを解除しますか？これは戻すことはできません',
+      () => {
+        state.cmdUnlocked = true;
+        setMsg('コマンドのロックを解除した。');
+        refreshCommandVisibility();
+      },
+      null,
+      'はい',
+      'いいえ'
+    );
+  });
+
+  confirmYes.addEventListener('click', () => {
+    const fn = confirmState.onYes;
+    closeConfirm();
+    if(fn) fn();
+  });
+  confirmNo.addEventListener('click', () => {
+    const fn = confirmState.onNo;
+    closeConfirm();
+    if(fn) fn();
+  });
+
+  runCmdBtn.addEventListener('click', () => {
+    runCommand(cmdInput.value);
+    cmdInput.value = '';
+  });
+  addLongPress(runCmdBtn,
+    () => {
+      runCommand(cmdInput.value);
+      cmdInput.value = '';
+    },
+    () => {
+      const text = normText(cmdInput.value);
+      if(!text) return;
+      if(globalState.favoriteCmds.includes(text)){
+        globalState.favoriteCmds = globalState.favoriteCmds.filter(v => v !== text);
+        saveGlobal();
+        refreshCmdFavUI();
+        setMsg('お気に入りコマンドを解除した。');
+        return;
+      }
+      if(globalState.favoriteCmds.length >= 3){
+        setMsg('お気に入りコマンドは3つまで。');
+        return;
+      }
+      globalState.favoriteCmds.push(text);
+      saveGlobal();
+      refreshCmdFavUI();
+      setMsg('お気に入りコマンドに入れた。');
+    }
+  );
+
+  cmdInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      runCommand(cmdInput.value);
+      cmdInput.value = '';
+    }
+  });
+
+  closeWorldList.addEventListener('click', closeWorldListPanel);
+  worldOverlay.addEventListener('click', e => { if(e.target === worldOverlay) closeWorldListPanel(); });
+  createWorldBtn.addEventListener('click', () => {
+    if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
+    closeWorldListPanel();
+    startFreshWorld();
+  });
+  saveWorldBtn.addEventListener('click', saveCurrentWorld);
+  worldImageInput.addEventListener('change', () => {
+    const file = worldImageInput.files && worldImageInput.files[0];
+    if(file) saveWorldToSlotImageFromInput(file);
+    worldImageInput.value = '';
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if(isTyping()){
+      if(e.key === 'Escape') closeConfirm();
+      return;
+    }
+    const k = e.key.toLowerCase();
+    if(k === 'arrowleft' || k === 'a'){ e.preventDefault(); move(-1); }
+    else if(k === 'arrowright' || k === 'd'){ e.preventDefault(); move(1); }
+    else if(k === ' ' || k === 'spacebar'){ e.preventDefault(); mine(); }
+    else if(k === 'i'){ e.preventDefault(); invOverlay.classList.contains('open') ? closeInv() : openInv(); }
+    else if(k === 'r'){ e.preventDefault(); startFreshWorld(); }
+    else if(k === 'escape'){ closeInv(); closeConfirm(); closeWorldListPanel(); }
+  }, { passive:false });
+
+  window.addEventListener('resize', () => { updateLayout(); render(); });
+  window.addEventListener('beforeunload', () => { saveGlobal(); saveSaveSlots(); });
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('selectstart', e => e.preventDefault());
+
+  init();
+})();
+</script>
+</body>
+</html>
