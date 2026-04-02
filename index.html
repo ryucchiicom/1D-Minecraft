@@ -16,7 +16,10 @@
   }
   *{box-sizing:border-box}
   html,body{
-    margin:0;width:100%;height:100%;overflow:hidden;
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
     color:var(--text);
     font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     touch-action:none;
@@ -26,7 +29,8 @@
   button,input{font:inherit}
   #app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto}
   header{
-    padding:8px 10px 6px;background:rgba(0,0,0,.16);
+    padding:8px 10px 6px;
+    background:rgba(0,0,0,.16);
     border-bottom:1px solid rgba(255,255,255,.08)
   }
   .title{font-size:16px;font-weight:800}
@@ -66,12 +70,14 @@
   .cell.wood{background:linear-gradient(180deg,#8d6e63,#6d4c41)}
   .cell.leaf{background:linear-gradient(180deg,#66bb6a,#43a047)}
   .cell.stone{background:linear-gradient(180deg,#9aa0aa,#7f8590);color:#15181f}
+  .cell.cobblestone{background:linear-gradient(180deg,#7d838c,#616773);color:#15181f}
+  .cell.gravel{background:linear-gradient(180deg,#a7acb4,#7e858f);color:#16191f}
   .cell.coal_ore{background:linear-gradient(180deg,#30343d,#22262d)}
   .cell.iron_ore{background:linear-gradient(180deg,#8b949f,#666e7a);color:#f3ede2}
   .cell.gold_ore{background:linear-gradient(180deg,#d8b24c,#a97f1f);color:#1a1d24}
   .cell.diamond_ore{background:linear-gradient(180deg,#57d8e6,#2ea8bb);color:#0d1416}
   .cell.sand{background:linear-gradient(180deg,#f4e2a0,#ccb869);color:#201800}
-  .cell.gravel{background:linear-gradient(180deg,#a7acb4,#7e858f);color:#16191f}
+  .cell.coal{background:linear-gradient(180deg,#44484f,#24272d);color:#f2f2f2}
   .cell.obsidian{background:linear-gradient(180deg,#42385f,#241e35);color:#f2f0ff}
   .cell.netherrack{background:linear-gradient(180deg,#8a2f2f,#5d1919);color:#ffe5e5}
   .cell.soul_sand{background:linear-gradient(180deg,#6d5a45,#4d3d2d);color:#f1debc}
@@ -84,7 +90,6 @@
   .cell.crafting_table{background:linear-gradient(180deg,#b5875a,#8b5b34)}
   .cell.furnace{background:linear-gradient(180deg,#818896,#5f6674)}
   .cell.flint{background:linear-gradient(180deg,#7d828d,#50545e);color:#101216}
-  .cell.coal{background:linear-gradient(180deg,#44484f,#24272d);color:#f2f2f2}
   .cell.gunpowder{background:linear-gradient(180deg,#8d8f96,#5e6169);color:#0f1114}
   .cell.air_item,.cell.bucket,.cell.water_bucket,.cell.lava_bucket,.cell.flint_and_steel,.cell.tnt,.cell.nether_portal{
     background:linear-gradient(180deg,#4f586e,#2b3243)
@@ -115,18 +120,19 @@
     height:100%;
     object-fit:cover;
     pointer-events:none;
+    z-index:0;
   }
   .playerMark{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:24px;pointer-events:none
+    font-size:24px;pointer-events:none;z-index:1
   }
   .faceBadge{
     position:absolute;top:3px;right:4px;font-size:13px;line-height:1;padding:2px 4px;
-    border-radius:999px;background:rgba(0,0,0,.28);color:#fff;pointer-events:none
+    border-radius:999px;background:rgba(0,0,0,.28);color:#fff;pointer-events:none;z-index:2
   }
   .graveBadge{
     position:absolute;left:4px;bottom:3px;font-size:12px;font-weight:900;padding:1px 4px;
-    border-radius:999px;background:rgba(0,0,0,.32);color:#ffb0b0;pointer-events:none
+    border-radius:999px;background:rgba(0,0,0,.32);color:#ffb0b0;pointer-events:none;z-index:2
   }
   #controls{
     display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:8px;
@@ -425,8 +431,8 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const SAVE_KEY = 'oneDmc_saves_v11';
-  const GLOBAL_KEY = 'oneDmc_global_v11';
+  const SAVE_KEY = 'oneDmc_saves_v12';
+  const GLOBAL_KEY = 'oneDmc_global_v12';
   const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
   const PASSABLE = new Set(['empty','water','lava','fire','nether_portal']);
 
@@ -535,7 +541,7 @@
   ];
 
   const PLACEABLE = new Set([
-    'dirt','grass','wood','leaf','stone','sand','cobblestone',
+    'dirt','grass','wood','leaf','stone','sand','gravel','cobblestone',
     'crafting_table','furnace','torch','plank','water','lava','tnt','nether_portal',
     'obsidian','netherrack','soul_sand','ancient_debris'
   ]);
@@ -548,36 +554,43 @@
   const TEXTURE_DIR = 'textures/';
   const TEXTURE_EXTS = ['png', 'webp', 'jpg', 'jpeg'];
   const TEXTURE_MAP = Object.create(null);
+  const TEXTURE_STATE = Object.create(null);
 
-  function preloadTextures(){
-    for (const id of Object.keys(BLOCKS)){
-      if (id === 'empty') continue;
-      const names = [...new Set([id, BLOCKS[id]?.name].filter(Boolean))];
-      const candidates = [];
-      for (const name of names){
-        for (const ext of TEXTURE_EXTS){
-          candidates.push(encodeURI(`${TEXTURE_DIR}${name}.${ext}`));
-        }
+  function requestTexture(id){
+    if (!id || id === 'empty') return;
+    if (TEXTURE_STATE[id] === 'loading' || TEXTURE_STATE[id] === 'loaded' || TEXTURE_STATE[id] === 'missing') return;
+    TEXTURE_STATE[id] = 'loading';
+
+    const names = [...new Set([id, BLOCKS[id]?.name].filter(Boolean))];
+    const candidates = [];
+    for (const name of names){
+      for (const ext of TEXTURE_EXTS){
+        candidates.push(`${TEXTURE_DIR}${name}.${ext}`);
+        candidates.push(`./${TEXTURE_DIR}${name}.${ext}`);
       }
-      let i = 0;
-      const tryNext = () => {
-        if (i >= candidates.length){
-          TEXTURE_MAP[id] = null;
-          return;
-        }
-        const img = new Image();
-        img.onload = () => {
-          TEXTURE_MAP[id] = img.src;
-          render();
-        };
-        img.onerror = () => {
-          i++;
-          tryNext();
-        };
-        img.src = candidates[i];
-      };
-      tryNext();
     }
+
+    let i = 0;
+    const tryNext = () => {
+      if (i >= candidates.length){
+        TEXTURE_STATE[id] = 'missing';
+        TEXTURE_MAP[id] = null;
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        TEXTURE_STATE[id] = 'loaded';
+        TEXTURE_MAP[id] = img.src;
+        render();
+      };
+      img.onerror = () => {
+        i++;
+        tryNext();
+      };
+      img.src = candidates[i] + `?v=${Date.now()}`;
+    };
+
+    tryNext();
   }
 
   function toolOutId(prefix,suffix){ return prefix==='wood' ? `wooden_${suffix}` : `${prefix}_${suffix}`; }
@@ -711,8 +724,8 @@
     }
   };
   const DIM_CAT = {
-    [DIM.OVERWORLD]: [['soil',1.35], ['stone',1.0], ['wood',0.95], ['liquid',0.22]],
-    [DIM.NETHER]: [['nether',1.85], ['liquid',0.18]]
+    [DIM.OVERWORLD]: [['soil',1.15], ['stone',1.0], ['wood',0.95], ['liquid',0.35]],
+    [DIM.NETHER]: [['nether',1.55], ['liquid',0.22]]
   };
 
   class LineGen{
@@ -725,16 +738,18 @@
       this.negEnd = 0;
       this.posPrev = this.dim === DIM.OVERWORLD ? 'soil' : 'nether';
       this.negPrev = this.posPrev;
+      this.posStreak = 0;
+      this.negStreak = 0;
     }
-    chooseCat(prev, side, idx){
+    chooseCat(prev, streak, side, idx){
       const base = DIM_CAT[this.dim].map(([k,w]) => {
         let ww = w;
-        if(k === prev) ww *= 4.25;
-        if(prev === 'soil' && k === 'stone') ww *= 1.5;
-        if(prev === 'stone' && k === 'soil') ww *= 1.25;
-        if(prev === 'wood' && k === 'soil') ww *= 1.2;
-        if(prev === 'liquid' && k === 'liquid') ww *= 5;
-        if(prev === 'nether' && k === 'liquid') ww *= 0.8;
+        if(k === prev) ww *= (streak >= 2 ? 0.6 : 1.4);
+        if(prev === 'soil' && k === 'stone') ww *= 1.15;
+        if(prev === 'stone' && k === 'soil') ww *= 1.05;
+        if(prev === 'wood' && k === 'soil') ww *= 1.05;
+        if(prev === 'liquid' && k === 'liquid') ww *= 1.8;
+        if(prev === 'nether' && k === 'liquid') ww *= 0.9;
         return [k, ww];
       });
       const r = hashMany(worlds[this.dim].seed, this.lineCoord, side === 'pos' ? 1 : -1, idx, 1001);
@@ -744,18 +759,20 @@
       const runs = side === 'pos' ? this.posRuns : this.negRuns;
       let end = side === 'pos' ? this.posEnd : this.negEnd;
       let prev = side === 'pos' ? this.posPrev : this.negPrev;
+      let streak = side === 'pos' ? this.posStreak : this.negStreak;
       while(end < absCoord){
         const idx = runs.length;
         const len = 5 + Math.floor(hashMany(worlds[this.dim].seed, this.lineCoord, side === 'pos' ? 7 : 9, idx, 2002) * 6);
-        const cat = this.chooseCat(prev, side, idx);
+        const cat = this.chooseCat(prev, streak, side, idx);
         const start = end + 1;
         const run = { start, end:start+len-1, cat, idx };
         runs.push(run);
         end = run.end;
-        prev = cat;
+        if(cat === prev) streak += 1;
+        else { prev = cat; streak = 1; }
       }
-      if(side === 'pos'){ this.posEnd = end; this.posPrev = prev; }
-      else{ this.negEnd = end; this.negPrev = prev; }
+      if(side === 'pos'){ this.posEnd = end; this.posPrev = prev; this.posStreak = streak; }
+      else{ this.negEnd = end; this.negPrev = prev; this.negStreak = streak; }
     }
     pickFromPool(cat, idx, absCoord, side){
       const pool = DIM_POOLS[this.dim][cat];
@@ -1730,14 +1747,11 @@
       if(Math.random() > 1/16) {
         return { ok:false, mined:false, msg:'空振りした。' };
       }
-
       setBlockAt(dim, x, y, 'empty');
-
       if(Math.random() < 1/16){
         addItem('gravel', 1);
         return { ok:true, mined:true, drop:'gravel', msg:'砂利を手に入れた。' };
       }
-
       return { ok:true, mined:true, drop:null, msg:'丸石を砕いた。砂利は出なかった。' };
     }
 
@@ -1745,14 +1759,11 @@
       if(Math.random() > 1/16) {
         return { ok:false, mined:false, msg:'空振りした。' };
       }
-
       setBlockAt(dim, x, y, 'empty');
-
       if(Math.random() < 1/16){
         addItem('flint', 1);
         return { ok:true, mined:true, drop:'flint', msg:'火打石を手に入れた。' };
       }
-
       return { ok:true, mined:true, drop:null, msg:'砂利を砕いた。火打石は出なかった。' };
     }
 
@@ -2113,12 +2124,16 @@
 
     if(!state.heldItem){ setMsg('手持ちがない。'); return; }
 
-    if(canPlaceable(state.heldItem) && block === 'empty'){
-      const placed = state.heldItem;
-      setBlockAt(state.dim,t.x,t.y,placed);
-      removeItem(placed,1);
-      refreshAllMenus(); render();
-      setMsg(`${displayName(placed)} を置いた。`);
+    if(canPlaceable(state.heldItem)){
+      if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire'){
+        const placed = state.heldItem;
+        setBlockAt(state.dim,t.x,t.y,placed);
+        removeItem(placed,1);
+        refreshAllMenus(); render();
+        setMsg(`${displayName(placed)} を置いた。`);
+        return;
+      }
+      setMsg('そこには置けない。');
       return;
     }
 
@@ -2268,6 +2283,8 @@
       const cell = document.createElement('div');
       cell.className = 'cell ' + block;
       cell.innerHTML = '';
+
+      if(TEXTURE_STATE[block] === undefined) requestTexture(block);
 
       const tex = TEXTURE_MAP[block];
       if(tex){
@@ -2632,7 +2649,6 @@
   function init(){
     buildSpawnArea();
     ensureSpawnResources();
-    preloadTextures();
     updateLayout();
     updateTheme();
     if(saves.length > 0){ startFreshWorld(); openWorldListPanel(); }
