@@ -260,12 +260,8 @@
     display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;color:var(--muted)
   }
   .lockBadge{color:#ffcbcb}
-  .diffPanel{
-    display:grid;gap:10px
-  }
-  .diffGrid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px
-  }
+  .diffPanel{display:grid;gap:10px}
+  .diffGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
   .diffBigBtn{
     min-height:66px;text-align:left;border-radius:16px
   }
@@ -284,12 +280,6 @@
 </style>
 </head>
 <body>
-<script>
-window.ONE_D_MINECRAFT_TEXTURES = {
-  stone: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABEElEQVQ4EW2TsQ6DMAxEUylbGNgY+Gi+koGNAea2z/RFLsJSY+dsny8JfS3L8i7J9n0v53kG0lqL+DiOMgxDx1J5qTRgNNmA14jdb9tWJLO22kzCpArcSzZNk2F4SIKAYJ7nAFE0jmPBgxNjKiV2AHFVOgUmxNxDIpEEkAeBU5wY6G+xaF3XQDwSHkN1KIjdd8lTaPJYKuElIJWYoX+XyC1T5CRIbJDE4zm0OgUARlTgsawogNsCWf8OLH5qfsLkqsjmfZWrVHDMc4uD5bj6cXgx+LsamsyT4+dx+yVShFlIgZPEUJUvmnzNjAA2XXTXCgYJas1ztPgOnibZ7GT3+Pxq7Pt/gU02J0GS78SBkn8AQafbCMsFa2IAAAAASUVORK5CYII="
-};
-</script>
-
 <div id="app">
   <header>
     <div class="title">1D Minecraft</div>
@@ -409,7 +399,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 
       <div class="section">
         <h3>セーブ</h3>
-        <div class="small">ここから世界を保存できる。セーブが0個なら自動で新規ワールドになる。世界は10個まで。</div>
+        <div class="small">ここから世界を保存できる。セーブが0個なら初回だけ自動で新規ワールドになる。世界は10個まで。</div>
         <button class="saveBtn" id="saveWorldBtn">セーブ</button>
       </div>
     </div>
@@ -473,10 +463,17 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 <input id="worldImageInput" type="file" accept="image/*" hidden />
 
 <script>
+/* ここに石テクスチャを埋め込み */
+window.ONE_D_MINECRAFT_TEXTURES = {
+  stone: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABEElEQVQ4EW2TsQ6DMAxEUylbGNgY+Gi+koGNAea2z/RFLsJSY+dsny8JfS3L8i7J9n0v53kG0lqL+DiOMgxDx1J5qTRgNNmA14jdb9tWJLO22kzCpArcSzZNk2F4SIKAYJ7nAFE0jmPBgxNjKiV2AHFVOgUmxNxDIpEEkAeBU5wY6G+xaF3XQDwSHkN1KIjdd8lTaPJYKuElIJWYoX+XyC1T5CRIbJDE4zm0OgUARlTgsawogNsCWf8OLH5qfsLkqsjmfZWrVHDMc4uD5bj6cXgx+LsamsyT4+dx+yVShFlIgZPEUJUvmnzNjAA2XXTXCgYJas1ztPgOnibZ7GT3+Pxq7Pt/gU02J0GS78SBkn8AQafbCMsFa2IAAAAASUVORK5CYII="
+};
+</script>
+
+<script>
 (() => {
   const $ = id => document.getElementById(id);
-  const SAVE_KEY = 'oneDmc_saves_v14';
-  const GLOBAL_KEY = 'oneDmc_global_v14';
+  const SAVE_KEY = 'oneDmc_saves_v15';
+  const GLOBAL_KEY = 'oneDmc_global_v15';
   const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
   const DIFFICULTIES = {
     peaceful:{ label:'ピースフル', spawnChance:0, regenChance:1, regenAmount:0.5, nightSpawnFactor:0, name:'peaceful' },
@@ -555,9 +552,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 
-  const globalState = Object.assign({ favoriteCmds:[] }, loadJSON(GLOBAL_KEY, {}));
+  const globalState = Object.assign({ favoriteCmds:[], firstLaunchDone:false }, loadJSON(GLOBAL_KEY, {}));
   if(!Array.isArray(globalState.favoriteCmds)) globalState.favoriteCmds = [];
-  function saveGlobal(){ saveJSON(GLOBAL_KEY, { favoriteCmds: globalState.favoriteCmds.slice(0,3) }); }
+  if(typeof globalState.firstLaunchDone !== 'boolean') globalState.firstLaunchDone = false;
+  function saveGlobal(){ saveJSON(GLOBAL_KEY, { favoriteCmds: globalState.favoriteCmds.slice(0,3), firstLaunchDone: globalState.firstLaunchDone }); }
 
   const BLOCKS = {
     empty:{name:'無',icon:'·'},
@@ -729,6 +727,8 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   const saves = loadJSON(SAVE_KEY, []);
   let activeSaveId = null;
   let pendingDifficulty = 'normal';
+  let hasWorld = false;
+  const dummyWorld = makeWorld(DIM.OVERWORLD);
   const worlds = { [DIM.OVERWORLD]: makeWorld(DIM.OVERWORLD), [DIM.NETHER]: makeWorld(DIM.NETHER) };
 
   const state = {
@@ -754,7 +754,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   const lineCache = { [DIM.OVERWORLD]: new Map(), [DIM.NETHER]: new Map() };
   function clearLineCaches(){ lineCache[DIM.OVERWORLD].clear(); lineCache[DIM.NETHER].clear(); }
 
-  function world(){ return worlds[state.dim]; }
+  function world(){ return hasWorld ? worlds[state.dim] : dummyWorld; }
   function currentPos(){ return state.pos[state.dim]; }
   function activeAxis(){ return state.dim === DIM.OVERWORLD ? 'x' : 'y'; }
   function fixedAxis(){ return state.dim === DIM.OVERWORLD ? 'y' : 'x'; }
@@ -979,33 +979,29 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     add('diamond pickaxe', 'diamond_pickaxe');
     add('wood pickaxe', 'wooden_pickaxe');
     add('wooden pickaxe', 'wooden_pickaxe');
-
     add('stone axe', 'stone_axe');
     add('iron axe', 'iron_axe');
     add('gold axe', 'gold_axe');
     add('diamond axe', 'diamond_axe');
     add('wood axe', 'wooden_axe');
     add('wooden axe', 'wooden_axe');
-
     add('stone shovel', 'stone_shovel');
     add('iron shovel', 'iron_shovel');
     add('gold shovel', 'gold_shovel');
     add('diamond shovel', 'diamond_shovel');
     add('wood shovel', 'wooden_shovel');
     add('wooden shovel', 'wooden_shovel');
-
     add('stone sword', 'stone_sword');
     add('iron sword', 'iron_sword');
     add('gold sword', 'gold_sword');
     add('diamond sword', 'diamond_sword');
     add('wood sword', 'wooden_sword');
     add('wooden sword', 'wooden_sword');
-
-    add('wood alltools', 'wood_alltools');
-    add('stone alltools', 'stone_alltools');
-    add('iron alltools', 'iron_alltools');
-    add('gold alltools', 'gold_alltools');
-    add('diamond alltools', 'diamond_alltools');
+    add('wood all tools', 'wood_alltools');
+    add('stone all tools', 'stone_alltools');
+    add('iron all tools', 'iron_alltools');
+    add('gold all tools', 'gold_alltools');
+    add('diamond all tools', 'diamond_alltools');
     add('woodalltools', 'wood_alltools');
     add('stonealltools', 'stone_alltools');
     add('ironalltools', 'iron_alltools');
@@ -1716,6 +1712,335 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     saveSaveSlots();
   }
 
+  function snapshotGame(){
+    return {
+      version:1,
+      dim:state.dim,
+      difficulty:state.difficulty,
+      pos:deep(state.pos),
+      facing:state.facing,
+      hp:state.hp, maxHp:state.maxHp,
+      breath:state.breath, maxBreath:state.maxBreath,
+      regenAcc:state.regenAcc, downedAcc:state.downedAcc, attackCd:state.attackCd,
+      fireAcc:state.fireAcc, lavaAcc:state.lavaAcc, burnRemain:state.burnRemain, burnAcc:state.burnAcc, waterDamageAcc:state.waterDamageAcc,
+      soulSlow:state.soulSlow, prevBlock:state.prevBlock,
+      gameTime:state.gameTime, nightSpawnAcc:state.nightSpawnAcc, portalAcc:state.portalAcc, portalRecentTravel:state.portalRecentTravel, portalShake:state.portalShake,
+      inventory:deep(state.inventory), infiniteItems:[...state.infiniteItems], heldItem:state.heldItem,
+      keepInventory:state.keepInventory, cmdUnlocked:state.cmdUnlocked,
+      craftGridSize:state.craftGridSize, craftGrid:deep(state.craftGrid),
+      inventorySearch:state.inventorySearch, favoriteItems:deep(state.favoriteItems),
+      worlds:{ overworld:serializeWorld(worlds[DIM.OVERWORLD]), nether:serializeWorld(worlds[DIM.NETHER]) }
+    };
+  }
+  function applySnapshot(data){
+    if(!data) return;
+    state.dim = data.dim || DIM.OVERWORLD;
+    state.difficulty = data.difficulty || 'normal';
+    state.pos = data.pos || state.pos;
+    state.facing = data.facing ?? 1;
+    state.hp = data.hp ?? 10; state.maxHp = data.maxHp ?? 10;
+    state.breath = data.breath ?? 10; state.maxBreath = data.maxBreath ?? 10;
+    state.regenAcc = data.regenAcc ?? 0; state.downedAcc = data.downedAcc ?? 0; state.attackCd = data.attackCd ?? 0;
+    state.fireAcc = data.fireAcc ?? 0; state.lavaAcc = data.lavaAcc ?? 0; state.burnRemain = data.burnRemain ?? 0; state.burnAcc = data.burnAcc ?? 0; state.waterDamageAcc = data.waterDamageAcc ?? 0;
+    state.soulSlow = data.soulSlow ?? 0; state.prevBlock = data.prevBlock ?? 'empty';
+    state.gameTime = data.gameTime ?? 0; state.nightSpawnAcc = data.nightSpawnAcc ?? 0;
+    state.portalAcc = data.portalAcc ?? 0; state.portalRecentTravel = !!data.portalRecentTravel; state.portalShake = data.portalShake ?? 0;
+    state.inventory = data.inventory || {}; state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
+    state.keepInventory = !!data.keepInventory; state.cmdUnlocked = !!data.cmdUnlocked;
+    state.craftGridSize = data.craftGridSize || 2; state.craftGrid = data.craftGrid || Array(state.craftGridSize * state.craftGridSize).fill(null);
+    state.inventorySearch = data.inventorySearch || ''; state.favoriteItems = data.favoriteItems || [];
+    const w = data.worlds || {};
+    worlds[DIM.OVERWORLD] = deserializeWorld(w.overworld, DIM.OVERWORLD);
+    worlds[DIM.NETHER] = deserializeWorld(w.nether, DIM.NETHER);
+    clearLineCaches();
+    updateTheme();
+    normalizeHeld();
+    refreshCommandVisibility();
+    hasWorld = true;
+  }
+
+  function saveSaveSlots(){ saveJSON(SAVE_KEY, saves); }
+
+  function renderWorldList(){
+    worldGrid.innerHTML = '';
+    if(!saves.length){
+      const empty = document.createElement('div');
+      empty.className = 'small';
+      empty.textContent = '保存済みワールドはまだない。';
+      worldGrid.appendChild(empty);
+      createWorldBtn.style.display = 'inline-flex';
+      return;
+    }
+    createWorldBtn.style.display = saves.length < 10 ? 'inline-flex' : 'none';
+    saves.forEach(slot => {
+      const card = document.createElement('div');
+      card.className = 'worldCard';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'worldThumb';
+      if(slot.image){
+        const img = document.createElement('img');
+        img.src = slot.image;
+        thumb.appendChild(img);
+      }
+      const ph = document.createElement('div');
+      ph.className = 'ph';
+      ph.textContent = slot.name || '無題のワールド';
+      thumb.appendChild(ph);
+
+      const row = document.createElement('div');
+      row.className = 'worldHeaderRow';
+      if(activeSaveId === slot.id){
+        const b = document.createElement('span');
+        b.className = 'badge';
+        b.textContent = '現在';
+        row.appendChild(b);
+      }
+      const dimBadge = document.createElement('span');
+      dimBadge.className = 'badge';
+      dimBadge.textContent = (slot.data?.dim === DIM.NETHER) ? 'Nether' : 'Overworld';
+      row.appendChild(dimBadge);
+
+      const diffBadge = document.createElement('span');
+      diffBadge.className = 'badge';
+      diffBadge.textContent = (slot.difficulty && DIFFICULTIES[slot.difficulty]) ? DIFFICULTIES[slot.difficulty].label : 'ノーマル';
+      row.appendChild(diffBadge);
+
+      if(slot.locked){
+        const lb = document.createElement('span');
+        lb.className = 'badge lockBadge';
+        lb.textContent = 'LOCKED';
+        row.appendChild(lb);
+      }
+
+      const name = document.createElement('div');
+      name.className = 'worldName';
+      name.textContent = slot.name || '無題のワールド';
+
+      const meta = document.createElement('div');
+      meta.className = 'worldMeta';
+      const ts = slot.updatedAt ? new Date(slot.updatedAt).toLocaleString() : '—';
+      meta.textContent = `更新: ${ts}`;
+
+      const actions = document.createElement('div');
+      actions.className = 'worldActions';
+
+      const open = document.createElement('button');
+      open.className = 'loadBtn';
+      open.textContent = slot.locked ? '開けない' : '開く';
+      open.disabled = !!slot.locked;
+      open.addEventListener('click', () => loadWorldById(slot.id));
+
+      const rename = document.createElement('button');
+      rename.className = 'miniBtn';
+      rename.textContent = '名前変更';
+      rename.addEventListener('click', () => {
+        const next = prompt('ワールド名', slot.name || '無題のワールド');
+        if(next === null) return;
+        slot.name = next.trim() || slot.name || '無題のワールド';
+        slot.updatedAt = Date.now();
+        saveSaveSlots();
+        renderWorldList();
+      });
+
+      const imgBtn = document.createElement('button');
+      imgBtn.className = 'miniBtn';
+      imgBtn.textContent = '画像';
+      imgBtn.addEventListener('click', () => {
+        worldImageInput.dataset.target = slot.id;
+        worldImageInput.click();
+      });
+
+      const dup = document.createElement('button');
+      dup.className = 'miniBtn';
+      dup.textContent = '複製';
+      dup.addEventListener('click', () => duplicateWorld(slot.id));
+
+      const del = document.createElement('button');
+      del.className = 'dangerBtn';
+      del.textContent = '削除';
+      del.addEventListener('click', () => {
+        openConfirm(
+          `「${slot.name || '無題のワールド'}」を削除する？`,
+          () => {
+            const idx = saves.findIndex(s => s.id === slot.id);
+            if(idx >= 0) saves.splice(idx,1);
+            if(activeSaveId === slot.id) activeSaveId = null;
+            saveSaveSlots();
+            renderWorldList();
+            if(!saves.length){
+              // ここでは勝手に新規ワールドを作らない
+              setMsg('ワールドを全部消した。新しいワールドは自分で作ってね。');
+            }
+          },
+          null,
+          '削除する',
+          'やめる'
+        );
+      });
+
+      actions.append(open,rename,imgBtn,dup,del);
+      card.append(row,thumb,name,meta,actions);
+      worldGrid.appendChild(card);
+    });
+  }
+  function openWorldListPanel(){
+    renderWorldList();
+    worldOverlay.classList.add('open');
+    worldOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeWorldListPanel(){
+    worldOverlay.classList.remove('open');
+    worldOverlay.setAttribute('aria-hidden','true');
+  }
+  function loadWorldById(id){
+    const slot = saves.find(s => s.id === id);
+    if(!slot) return;
+    if(slot.locked){
+      setMsg('ハードコアのワールドは開けない。');
+      return;
+    }
+    applySnapshot(slot.data);
+    activeSaveId = id;
+    hasWorld = true;
+    closeWorldListPanel();
+    refreshAllMenus(); render();
+    setMsg(`「${slot.name || '無題のワールド'}」を開いた。`);
+  }
+  function duplicateWorld(id){
+    if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
+    const slot = saves.find(s => s.id === id);
+    if(!slot) return;
+    const copy = deep(slot);
+    copy.id = uid();
+    copy.name = `${copy.name || '無題のワールド'} (copy)`;
+    copy.updatedAt = Date.now();
+    copy.data = deep(slot.data);
+    copy.locked = false;
+    saves.push(copy);
+    saveSaveSlots();
+    renderWorldList();
+  }
+  function startFreshWorld(difficulty='normal'){
+    worlds[DIM.OVERWORLD] = makeWorld(DIM.OVERWORLD);
+    worlds[DIM.NETHER] = makeWorld(DIM.NETHER);
+    clearLineCaches();
+    state.dim = DIM.OVERWORLD;
+    state.difficulty = difficulty;
+    state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
+    state.facing = 1;
+    state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
+    state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
+    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
+    state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
+    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
+    state.keepInventory = false;
+    state.cmdUnlocked = false;
+    state.craftGridSize = 2; state.craftGrid = Array(4).fill(null);
+    buildSpawnArea(); ensureSpawnResources(); normalizeHeld(); updateTheme(); refreshAllMenus(); render();
+    hasWorld = true;
+    setMsg(`新しい世界を作った。${DIFFICULTIES[difficulty]?.label || difficulty}`);
+  }
+
+  function openDifficultyPanel(){
+    pendingDifficulty = 'normal';
+    difficultyText.textContent = '新しいワールドの難易度を選んでね。';
+    difficultyOverlay.classList.add('open');
+    difficultyOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeDifficultyPanel(){
+    difficultyOverlay.classList.remove('open');
+    difficultyOverlay.setAttribute('aria-hidden','true');
+  }
+
+  function saveCurrentWorld(){
+    if(!hasWorld){ setMsg('まずワールドを作ってね。'); return false; }
+    const snap = snapshotGame();
+    const existing = saves.find(s => s.id === activeSaveId);
+    const name = existing?.name || `ワールド ${saves.length + 1}`;
+    if(activeSaveId){
+      const idx = saves.findIndex(s => s.id === activeSaveId);
+      if(idx >= 0) saves[idx] = { ...saves[idx], name, difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked: !!saves[idx].locked };
+    }else{
+      if(saves.length >= 10){ setMsg('セーブは10個まで。'); return false; }
+      const slot = { id:uid(), name, image:'', difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked:false };
+      saves.push(slot);
+      activeSaveId = slot.id;
+    }
+    saveSaveSlots();
+    setMsg('セーブしました！終了して一覧を開きますか？');
+    openConfirm(
+      'セーブしました！終了して一覧を開きますか？',
+      () => openWorldListPanel(),
+      null,
+      'はい',
+      'いいえ'
+    );
+    return true;
+  }
+  function saveWorldToSlotImageFromInput(file){
+    const id = worldImageInput.dataset.target;
+    if(!id || !file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const slot = saves.find(s => s.id === id);
+      if(!slot) return;
+      slot.image = String(reader.result || '');
+      slot.updatedAt = Date.now();
+      saveSaveSlots();
+      renderWorldList();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function addLongPress(el,onTap,onLong){
+    let timer = null;
+    let longed = false;
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      longed = false;
+      timer = setTimeout(() => { longed = true; onLong(); }, 500);
+    });
+    const clear = () => { if(timer) clearTimeout(timer); timer = null; };
+    el.addEventListener('pointerup', () => { clear(); if(!longed) onTap(); });
+    el.addEventListener('pointercancel', clear);
+    el.addEventListener('pointerleave', clear);
+  }
+
+  function updateTheme(){
+    document.body.style.background = state.dim === DIM.NETHER ? 'linear-gradient(#3b1111,#1a0606)' : 'linear-gradient(#171b25,#0f1218)';
+  }
+
+  function refreshCommandVisibility(){
+    const canUse = state.cmdUnlocked && !hardcore() && hasWorld;
+    cmdLockPrompt.style.display = canUse ? 'none' : 'block';
+    cmdUnlockedBox.style.display = canUse ? 'block' : 'none';
+    cmdInput.disabled = !canUse;
+    unlockCmdBtn.disabled = hardcore() || !hasWorld;
+    unlockCmdBtn.textContent = hardcore() ? 'ハードコアでは使えない' : 'コマンドのロックを解除';
+    refreshCmdFavUI();
+  }
+  function refreshAllMenus(){
+    normalizeHeld();
+    refreshInventoryUI();
+    if(invOverlay.classList.contains('open')){
+      refreshCraftUI();
+      refreshFurnaceUI();
+      refreshCommandVisibility();
+    }
+  }
+  function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
+  function currentBlockPassable(block){ return PASSABLE.has(block); }
+
+  function saveActiveSlotSnapshot(){
+    const slot = currentSaveSlot();
+    if(!slot) return;
+    slot.data = snapshotGame();
+    slot.difficulty = state.difficulty;
+    slot.updatedAt = Date.now();
+    saveSaveSlots();
+  }
+
   function killPlayer(){
     const w = world();
     const p = currentPos();
@@ -1795,7 +2120,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   function runCommand(raw){
     const text = normText(raw);
     if(!text) return;
-    if(!state.cmdUnlocked || hardcore()){ setMsg('コマンドは使えない。'); return; }
+    if(!state.cmdUnlocked || hardcore() || !hasWorld){ setMsg('コマンドは使えない。'); return; }
     const parts = text.split(/\s+/);
     const cmd = parts[0].replace(/^\/+/, '').toLowerCase();
 
@@ -1914,7 +2239,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
 
   function updateNight(dt){
-    if(!isNight() || state.difficulty === 'peaceful') return;
+    if(!isNight() || state.difficulty === 'peaceful' || !hasWorld) return;
     state.nightSpawnAcc += dt;
     const factor = currentNightFactor();
     while(state.nightSpawnAcc >= 1){
@@ -2166,6 +2491,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
 
   function mine(){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     const targetMob = enemyAtTarget();
     if(targetMob){ attackEnemy(targetMob); return; }
 
@@ -2228,6 +2554,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
 
   function placeOrUse(){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     const t = currentTarget();
     const block = getBlockAt(state.dim,t.x,t.y);
 
@@ -2346,6 +2673,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
 
   function craftFromGrid(){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     const recipe = findMatchingRecipe();
     if(!recipe){ setMsg('合うレシピがない。'); return; }
     state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
@@ -2354,6 +2682,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     setMsg(`${recipe.title} を作った。`);
   }
   function clearCraftGrid(){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     for(const item of state.craftGrid){ if(item) addItem(item,1); }
     state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
     refreshAllMenus(); render();
@@ -2375,6 +2704,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     setMsg('できあがりを回収した。');
   }
   function furnaceTakeOrPut(slotName){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     const p = currentPos();
     const f = getFurnaceState(world(),p.x,p.y);
     if(slotName === 'output'){ collectOutput(); return; }
@@ -2407,6 +2737,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     refreshAllMenus(); render();
   }
   function smeltOnce(){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     if(!furnaceEnabled()){ setMsg('かまどの前で使ってね。'); return; }
     const p = currentPos();
     const f = getFurnaceState(world(),p.x,p.y);
@@ -2461,6 +2792,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
 
   function move(dx){
+    if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     state.facing = dx < 0 ? -1 : 1;
     if(state.soulSlow > 0 && Math.random() < 0.5){ setMsg('足元が重い。'); render(); return; }
     const p = currentPos();
@@ -2477,6 +2809,16 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const p = currentPos();
     const w = world();
     line.innerHTML = '';
+    if(!hasWorld){
+      const empty = document.createElement('div');
+      empty.className = 'small';
+      empty.textContent = 'ワールドがありません。右下ではなく「新しいワールドを作る」を押してね。';
+      line.appendChild(empty);
+      posText.innerHTML = 'ワールドなし';
+      updateTheme();
+      appEl.style.transform = '';
+      return;
+    }
     const start = activeCoord() - 3;
     const fixed = fixedCoord();
 
@@ -2572,520 +2914,8 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     }
   }
 
-  function snapshotGame(){
-    return {
-      version:1,
-      dim:state.dim,
-      difficulty:state.difficulty,
-      pos:deep(state.pos),
-      facing:state.facing,
-      hp:state.hp, maxHp:state.maxHp,
-      breath:state.breath, maxBreath:state.maxBreath,
-      regenAcc:state.regenAcc, downedAcc:state.downedAcc, attackCd:state.attackCd,
-      fireAcc:state.fireAcc, lavaAcc:state.lavaAcc, burnRemain:state.burnRemain, burnAcc:state.burnAcc, waterDamageAcc:state.waterDamageAcc,
-      soulSlow:state.soulSlow, prevBlock:state.prevBlock,
-      gameTime:state.gameTime, nightSpawnAcc:state.nightSpawnAcc, portalAcc:state.portalAcc, portalRecentTravel:state.portalRecentTravel, portalShake:state.portalShake,
-      inventory:deep(state.inventory), infiniteItems:[...state.infiniteItems], heldItem:state.heldItem,
-      keepInventory:state.keepInventory, cmdUnlocked:state.cmdUnlocked,
-      craftGridSize:state.craftGridSize, craftGrid:deep(state.craftGrid),
-      inventorySearch:state.inventorySearch, favoriteItems:deep(state.favoriteItems),
-      worlds:{ overworld:serializeWorld(worlds[DIM.OVERWORLD]), nether:serializeWorld(worlds[DIM.NETHER]) }
-    };
-  }
-  function applySnapshot(data){
-    if(!data) return;
-    state.dim = data.dim || DIM.OVERWORLD;
-    state.difficulty = data.difficulty || 'normal';
-    state.pos = data.pos || state.pos;
-    state.facing = data.facing ?? 1;
-    state.hp = data.hp ?? 10; state.maxHp = data.maxHp ?? 10;
-    state.breath = data.breath ?? 10; state.maxBreath = data.maxBreath ?? 10;
-    state.regenAcc = data.regenAcc ?? 0; state.downedAcc = data.downedAcc ?? 0; state.attackCd = data.attackCd ?? 0;
-    state.fireAcc = data.fireAcc ?? 0; state.lavaAcc = data.lavaAcc ?? 0; state.burnRemain = data.burnRemain ?? 0; state.burnAcc = data.burnAcc ?? 0; state.waterDamageAcc = data.waterDamageAcc ?? 0;
-    state.soulSlow = data.soulSlow ?? 0; state.prevBlock = data.prevBlock ?? 'empty';
-    state.gameTime = data.gameTime ?? 0; state.nightSpawnAcc = data.nightSpawnAcc ?? 0;
-    state.portalAcc = data.portalAcc ?? 0; state.portalRecentTravel = !!data.portalRecentTravel; state.portalShake = data.portalShake ?? 0;
-    state.inventory = data.inventory || {}; state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
-    state.keepInventory = !!data.keepInventory; state.cmdUnlocked = !!data.cmdUnlocked;
-    state.craftGridSize = data.craftGridSize || 2; state.craftGrid = data.craftGrid || Array(state.craftGridSize * state.craftGridSize).fill(null);
-    state.inventorySearch = data.inventorySearch || ''; state.favoriteItems = data.favoriteItems || [];
-    const w = data.worlds || {};
-    worlds[DIM.OVERWORLD] = deserializeWorld(w.overworld, DIM.OVERWORLD);
-    worlds[DIM.NETHER] = deserializeWorld(w.nether, DIM.NETHER);
-    clearLineCaches();
-    updateTheme();
-    normalizeHeld();
-    refreshCommandVisibility();
-  }
-
-  function saveSaveSlots(){ saveJSON(SAVE_KEY, saves); }
-
-  function renderWorldList(){
-    worldGrid.innerHTML = '';
-    if(!saves.length){
-      const empty = document.createElement('div');
-      empty.className = 'small';
-      empty.textContent = '保存済みワールドはまだない。';
-      worldGrid.appendChild(empty);
-      createWorldBtn.style.display = 'inline-flex';
-      return;
-    }
-    createWorldBtn.style.display = saves.length < 10 ? 'inline-flex' : 'none';
-    saves.forEach(slot => {
-      const card = document.createElement('div');
-      card.className = 'worldCard';
-
-      const thumb = document.createElement('div');
-      thumb.className = 'worldThumb';
-      if(slot.image){
-        const img = document.createElement('img');
-        img.src = slot.image;
-        thumb.appendChild(img);
-      }
-      const ph = document.createElement('div');
-      ph.className = 'ph';
-      ph.textContent = slot.name || '無題のワールド';
-      thumb.appendChild(ph);
-
-      const row = document.createElement('div');
-      row.className = 'worldHeaderRow';
-      if(activeSaveId === slot.id){
-        const b = document.createElement('span');
-        b.className = 'badge';
-        b.textContent = '現在';
-        row.appendChild(b);
-      }
-      const dimBadge = document.createElement('span');
-      dimBadge.className = 'badge';
-      dimBadge.textContent = (slot.data?.dim === DIM.NETHER) ? 'Nether' : 'Overworld';
-      row.appendChild(dimBadge);
-
-      const diffBadge = document.createElement('span');
-      diffBadge.className = 'badge';
-      diffBadge.textContent = (slot.difficulty && DIFFICULTIES[slot.difficulty]) ? DIFFICULTIES[slot.difficulty].label : 'ノーマル';
-      row.appendChild(diffBadge);
-
-      if(slot.locked){
-        const lb = document.createElement('span');
-        lb.className = 'badge lockBadge';
-        lb.textContent = 'LOCKED';
-        row.appendChild(lb);
-      }
-
-      const name = document.createElement('div');
-      name.className = 'worldName';
-      name.textContent = slot.name || '無題のワールド';
-
-      const meta = document.createElement('div');
-      meta.className = 'worldMeta';
-      const ts = slot.updatedAt ? new Date(slot.updatedAt).toLocaleString() : '—';
-      meta.textContent = `更新: ${ts}`;
-
-      const actions = document.createElement('div');
-      actions.className = 'worldActions';
-
-      const open = document.createElement('button');
-      open.className = 'loadBtn';
-      open.textContent = slot.locked ? '開けない' : '開く';
-      open.disabled = !!slot.locked;
-      open.addEventListener('click', () => loadWorldById(slot.id));
-
-      const rename = document.createElement('button');
-      rename.className = 'miniBtn';
-      rename.textContent = '名前変更';
-      rename.addEventListener('click', () => {
-        const next = prompt('ワールド名', slot.name || '無題のワールド');
-        if(next === null) return;
-        slot.name = next.trim() || slot.name || '無題のワールド';
-        slot.updatedAt = Date.now();
-        saveSaveSlots();
-        renderWorldList();
-      });
-
-      const imgBtn = document.createElement('button');
-      imgBtn.className = 'miniBtn';
-      imgBtn.textContent = '画像';
-      imgBtn.addEventListener('click', () => {
-        worldImageInput.dataset.target = slot.id;
-        worldImageInput.click();
-      });
-
-      const dup = document.createElement('button');
-      dup.className = 'miniBtn';
-      dup.textContent = '複製';
-      dup.addEventListener('click', () => duplicateWorld(slot.id));
-
-      const del = document.createElement('button');
-      del.className = 'dangerBtn';
-      del.textContent = '削除';
-      del.addEventListener('click', () => {
-        openConfirm(
-          `「${slot.name || '無題のワールド'}」を削除する？`,
-          () => {
-            const idx = saves.findIndex(s => s.id === slot.id);
-            if(idx >= 0) saves.splice(idx,1);
-            if(activeSaveId === slot.id) activeSaveId = null;
-            saveSaveSlots();
-            renderWorldList();
-            if(!saves.length){
-              setMsg('保存済みワールドがなくなった。新しいワールドを作ってね。');
-            }
-          },
-          null,
-          '削除する',
-          'やめる'
-        );
-      });
-
-      actions.append(open,rename,imgBtn,dup,del);
-      card.append(row,thumb,name,meta,actions);
-      worldGrid.appendChild(card);
-    });
-  }
-  function openWorldListPanel(){
-    renderWorldList();
-    worldOverlay.classList.add('open');
-    worldOverlay.setAttribute('aria-hidden','false');
-  }
-  function closeWorldListPanel(){
-    worldOverlay.classList.remove('open');
-    worldOverlay.setAttribute('aria-hidden','true');
-  }
-  function loadWorldById(id){
-    const slot = saves.find(s => s.id === id);
-    if(!slot) return;
-    if(slot.locked){
-      setMsg('ハードコアのワールドは開けない。');
-      return;
-    }
-    applySnapshot(slot.data);
-    activeSaveId = id;
-    closeWorldListPanel();
-    refreshAllMenus(); render();
-    setMsg(`「${slot.name || '無題のワールド'}」を開いた。`);
-  }
-  function duplicateWorld(id){
-    if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
-    const slot = saves.find(s => s.id === id);
-    if(!slot) return;
-    const copy = deep(slot);
-    copy.id = uid();
-    copy.name = `${copy.name || '無題のワールド'} (copy)`;
-    copy.updatedAt = Date.now();
-    copy.data = deep(slot.data);
-    copy.locked = false;
-    saves.push(copy);
-    saveSaveSlots();
-    renderWorldList();
-  }
-  function startFreshWorld(difficulty='normal'){
-    worlds[DIM.OVERWORLD] = makeWorld(DIM.OVERWORLD);
-    worlds[DIM.NETHER] = makeWorld(DIM.NETHER);
-    clearLineCaches();
-    state.dim = DIM.OVERWORLD;
-    state.difficulty = difficulty;
-    state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
-    state.facing = 1;
-    state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
-    state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
-    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
-    state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
-    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
-    state.keepInventory = false;
-    state.cmdUnlocked = false;
-    state.craftGridSize = 2; state.craftGrid = Array(4).fill(null);
-    buildSpawnArea(); ensureSpawnResources(); normalizeHeld(); updateTheme(); refreshAllMenus(); render();
-    setMsg(`新しい世界を作った。${DIFFICULTIES[difficulty]?.label || difficulty}`);
-  }
-
-  function openDifficultyPanel(){
-    pendingDifficulty = 'normal';
-    difficultyText.textContent = '新しいワールドの難易度を選んでね。';
-    difficultyOverlay.classList.add('open');
-    difficultyOverlay.setAttribute('aria-hidden','false');
-  }
-  function closeDifficultyPanel(){
-    difficultyOverlay.classList.remove('open');
-    difficultyOverlay.setAttribute('aria-hidden','true');
-  }
-
-  function saveCurrentWorld(){
-    const snap = snapshotGame();
-    const existing = saves.find(s => s.id === activeSaveId);
-    const name = existing?.name || `ワールド ${saves.length + 1}`;
-    if(activeSaveId){
-      const idx = saves.findIndex(s => s.id === activeSaveId);
-      if(idx >= 0) saves[idx] = { ...saves[idx], name, difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked: !!saves[idx].locked };
-    }else{
-      if(saves.length >= 10){ setMsg('セーブは10個まで。'); return false; }
-      const slot = { id:uid(), name, image:'', difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked:false };
-      saves.push(slot);
-      activeSaveId = slot.id;
-    }
-    saveSaveSlots();
-    setMsg('セーブしました！終了して一覧を開きますか？');
-    openConfirm(
-      'セーブしました！終了して一覧を開きますか？',
-      () => openWorldListPanel(),
-      null,
-      'はい',
-      'いいえ'
-    );
-    return true;
-  }
-  function saveWorldToSlotImageFromInput(file){
-    const id = worldImageInput.dataset.target;
-    if(!id || !file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const slot = saves.find(s => s.id === id);
-      if(!slot) return;
-      slot.image = String(reader.result || '');
-      slot.updatedAt = Date.now();
-      saveSaveSlots();
-      renderWorldList();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function addLongPress(el,onTap,onLong){
-    let timer = null;
-    let longed = false;
-    el.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      longed = false;
-      timer = setTimeout(() => { longed = true; onLong(); }, 500);
-    });
-    const clear = () => { if(timer) clearTimeout(timer); timer = null; };
-    el.addEventListener('pointerup', () => { clear(); if(!longed) onTap(); });
-    el.addEventListener('pointercancel', clear);
-    el.addEventListener('pointerleave', clear);
-  }
-
-  function updateTheme(){
-    document.body.style.background = state.dim === DIM.NETHER ? 'linear-gradient(#3b1111,#1a0606)' : 'linear-gradient(#171b25,#0f1218)';
-  }
-
-  function refreshCommandVisibility(){
-    const canUse = state.cmdUnlocked && !hardcore();
-    cmdLockPrompt.style.display = canUse ? 'none' : 'block';
-    cmdUnlockedBox.style.display = canUse ? 'block' : 'none';
-    cmdInput.disabled = !canUse;
-    unlockCmdBtn.disabled = hardcore();
-    unlockCmdBtn.textContent = hardcore() ? 'ハードコアでは使えない' : 'コマンドのロックを解除';
-    refreshCmdFavUI();
-  }
-  function refreshAllMenus(){
-    normalizeHeld();
-    refreshInventoryUI();
-    if(invOverlay.classList.contains('open')){
-      refreshCraftUI();
-      refreshFurnaceUI();
-      refreshCommandVisibility();
-    }
-  }
-  function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
-  function currentBlockPassable(block){ return PASSABLE.has(block); }
-
-  function killPlayer(){
-    const w = world();
-    const p = currentPos();
-    const deathBlock = getBlockAt(state.dim,p.x,p.y);
-    const corpseItems = {};
-    const loseAll = deathBlock === 'fire' || deathBlock === 'lava';
-    if(loseAll){
-      state.inventory = {};
-      state.infiniteItems = new Set();
-    }else if(!state.keepInventory){
-      for(const item of Object.keys(state.inventory)){
-        if(state.infiniteItems.has(item)) continue;
-        corpseItems[item] = state.inventory[item];
-      }
-      for(const item of Object.keys(corpseItems)) delete state.inventory[item];
-      w.corpses.set(`${p.x},${p.y}`, { x:p.x, y:p.y, items:corpseItems, age:0, claimAcc:0 });
-    }
-
-    if(hardcore()){
-      const slot = currentSaveSlot();
-      if(slot){
-        slot.locked = true;
-        slot.data = snapshotGame();
-        slot.updatedAt = Date.now();
-        saveSaveSlots();
-      }
-      state.cmdUnlocked = false;
-      refreshCommandVisibility();
-    }
-
-    state.pos[DIM.OVERWORLD] = {x:0,y:0};
-    state.dim = DIM.OVERWORLD;
-    state.facing = 1;
-    state.hp = 10; state.breath = 10;
-    state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
-    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
-    state.soulSlow = 0; state.prevBlock = 'empty'; state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
-    updateTheme(); normalizeHeld(); refreshAllMenus(); render();
-    setMsg('死んだ。Overworldの0に戻った。');
-  }
-
-  function setTimeCommand(arg){
-    const token = normText(arg);
-    if(!token){ setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return; }
-    const lower = token.toLowerCase();
-    if(token==='昼' || lower==='day'){ state.gameTime = 0; state.nightSpawnAcc = 0; render(); setMsg('時刻を昼にした。'); return; }
-    if(token==='夜' || lower==='night'){ state.gameTime = 720; state.nightSpawnAcc = 0; render(); setMsg('時刻を夜にした。'); return; }
-    const m = token.match(/^(\d{1,2}):(\d{2})$/);
-    if(!m){ setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return; }
-    let hh = parseInt(m[1],10);
-    const mm = parseInt(m[2],10);
-    if(Number.isNaN(hh) || Number.isNaN(mm) || mm < 0 || mm >= 60){
-      setMsg('使い方: /time 〈昼or夜 or 00:00〜23:59〉'); return;
-    }
-    hh = ((hh % 24) + 24) % 24;
-    state.gameTime = hh * 60 + mm;
-    state.nightSpawnAcc = 0;
-    render();
-    setMsg(`時刻を ${timeText()} にした。`);
-  }
-
-  function travelTo(targetDim){
-    if(targetDim !== DIM.OVERWORLD && targetDim !== DIM.NETHER) return;
-    const from = state.dim;
-    const src = currentPos();
-    const dest = { x:src.x, y:src.y };
-    state.dim = targetDim;
-    state.pos[targetDim] = dest;
-    setBlockAt(targetDim, dest.x, dest.y, 'nether_portal');
-    state.prevBlock = 'empty';
-    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
-    state.portalAcc = 0; state.portalRecentTravel = true; state.portalShake = 0.25;
-    updateTheme(); refreshAllMenus(); render();
-    setMsg(`${from === DIM.OVERWORLD ? 'Overworld' : 'Nether'} → ${targetDim === DIM.OVERWORLD ? 'Overworld' : 'Nether'} に移動した。`);
-  }
-
-  function runCommand(raw){
-    const text = normText(raw);
-    if(!text) return;
-    if(!state.cmdUnlocked || hardcore()){ setMsg('コマンドは使えない。'); return; }
-    const parts = text.split(/\s+/);
-    const cmd = parts[0].replace(/^\/+/, '').toLowerCase();
-
-    if(cmd === 'keepinventory'){
-      state.keepInventory = !state.keepInventory;
-      setMsg(`keepinventory = ${state.keepInventory ? 'ON' : 'OFF'}`);
-      return;
-    }
-    if(cmd === 'tp'){
-      const a = parseInt(parts[1],10);
-      if(Number.isNaN(a)){ setMsg('使い方: /tp 〈x座標〉 [y座標]'); return; }
-      if(parts.length >= 3){
-        const b = parseInt(parts[2],10);
-        if(Number.isNaN(b)){ setMsg('使い方: /tp 〈x座標〉 [y座標]'); return; }
-        state.pos[state.dim].x = a;
-        state.pos[state.dim].y = b;
-      }else{
-        state.pos[state.dim][activeAxis()] = a;
-      }
-      state.portalAcc = 0; setMsg(`/tp ${parts.slice(1).join(' ')}`); render(); return;
-    }
-    if(cmd === 'time'){ setTimeCommand(parts[1]); return; }
-    if(cmd === 'dim'){
-      if(!parts[1]){ travelTo(state.dim === DIM.OVERWORLD ? DIM.NETHER : DIM.OVERWORLD); return; }
-      const t = (parts[1] || '').toLowerCase();
-      if(t === 'overworld' || t === 'ow') travelTo(DIM.OVERWORLD);
-      else if(t === 'nether' || t === 'n') travelTo(DIM.NETHER);
-      else setMsg('使い方: /dim 〈overworld / nether〉');
-      return;
-    }
-    if(cmd === 'gamemode'){
-      const d = (parts[1] || '').toLowerCase();
-      if(!['peaceful','easy','normal','hard'].includes(d)){
-        setMsg('使い方: /gamemode 〈peaceful / easy / normal / hard〉');
-        return;
-      }
-      state.difficulty = d;
-      const slot = currentSaveSlot();
-      if(slot){ slot.difficulty = d; slot.updatedAt = Date.now(); saveSaveSlots(); }
-      setMsg(`難易度を ${DIFFICULTIES[d].label} にした。`);
-      refreshCommandVisibility();
-      return;
-    }
-
-    if(cmd === 'give'){
-      const body = text.replace(/^\/+give\s+/i, '').trim();
-      if(!body){ setMsg('使い方: /give 〈アイテム名〉 〈個数〉'); return; }
-      const toks = body.split(/\s+/);
-      let qtyToken = '1';
-      let itemToken = body;
-      if(toks.length >= 2){
-        const last = toks[toks.length - 1];
-        const qtyLooks = last === '∞' || last.toUpperCase() === 'INFINITY' || /^-?\d+$/.test(last);
-        if(qtyLooks){
-          qtyToken = last;
-          itemToken = toks.slice(0,-1).join(' ');
-        }
-      }
-      const target = resolveItemId(itemToken);
-      if(!target){ setMsg('そのアイテムは使えない。'); return; }
-      const inf = qtyToken === '∞' || qtyToken.toUpperCase() === 'INFINITY';
-      const n = inf ? Infinity : Math.max(1, parseInt(qtyToken,10) || 1);
-
-      if(target.kind === 'all'){
-        for(const item of ITEM_ORDER.filter(i => !i.endsWith('_alltools'))) addItem(item, n);
-        refreshAllMenus(); render();
-        setMsg(`全アイテムを${inf ? '∞個' : `${n}個ずつ`}手に入れた。`);
-        return;
-      }
-
-      addItem(target.id, n);
-      refreshAllMenus(); render();
-      setMsg(`/give ${displayName(target.id)} ${inf ? '∞' : n}`);
-      return;
-    }
-
-    if(cmd === 'spawn'){
-      const type = mobAlias(parts[1] || '');
-      const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
-      if(!type){ setMsg('使い方: /spawn 〈モブ名〉 〈数〉'); return; }
-      const spawned = spawnCommandMob(type, n);
-      refreshAllMenus(); render();
-      setMsg(`${type === 'zombie' ? 'ゾンビ' : 'クリーパー'} を ${spawned} 体召喚した。`);
-      return;
-    }
-
-    if(cmd === 'setblock'){
-      const token = blockAlias(parts[1] || '');
-      const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
-      const p = currentPos();
-      for(let i=0;i<n;i++){
-        if(activeAxis()==='x') setBlockAt(state.dim, p.x + state.facing + i*state.facing, p.y, token === 'air' ? 'empty' : token);
-        else setBlockAt(state.dim, p.x, p.y + state.facing + i*state.facing, token === 'air' ? 'empty' : token);
-      }
-      refreshAllMenus(); updateTheme(); render();
-      setMsg(`/setblock ${parts[1] || ''} ${n}`);
-      return;
-    }
-
-    if(cmd === 'fill'){
-      const token = blockAlias(parts[1] || '');
-      const a = parseInt(parts[2],10);
-      const b = parseInt(parts[3],10);
-      if(Number.isNaN(a) || Number.isNaN(b)){ setMsg('使い方: /fill 〈ブロック名〉 〈初めの座標〉 〈終わりの座標〉'); return; }
-      const from = Math.min(a,b), to = Math.max(a,b);
-      const p = currentPos();
-      for(let c=from;c<=to;c++){
-        if(activeAxis()==='x') setBlockAt(state.dim, c, p.y, token === 'air' ? 'empty' : token);
-        else setBlockAt(state.dim, p.x, c, token === 'air' ? 'empty' : token);
-      }
-      refreshAllMenus(); updateTheme(); render();
-      setMsg(`/fill ${parts[1] || ''} ${from} ${to}`);
-      return;
-    }
-    setMsg('そのコマンドはまだ使えない。');
-  }
-
   function updateNight(dt){
-    if(!isNight() || state.difficulty === 'peaceful') return;
+    if(!isNight() || state.difficulty === 'peaceful' || !hasWorld) return;
     state.nightSpawnAcc += dt;
     const factor = currentNightFactor();
     while(state.nightSpawnAcc >= 1){
@@ -3114,935 +2944,16 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     }
   }
 
-  function baseMineRate(mat){
-    if(mat==='wood') return 1/8;
-    if(mat==='stone') return 1/4;
-    if(mat==='iron') return 1/2;
-    if(mat==='gold') return 1;
-    if(mat==='diamond') return 1;
-    return 1/16;
-  }
-  function breakGoldIfNeeded(item, kind){
-    if(!item) return;
-    if(toolMaterialOf(item) === 'gold' && Math.random() < breakChanceOnUse(item, kind)) breakHeldTool(item);
-  }
-
-  function mineSpecialCobbleLike(block, tool, dim, x, y){
-    if(block === 'cobblestone' && isShovelLike(tool)){
-      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
-      setBlockAt(dim, x, y, 'empty');
-      if(Math.random() < 1/16){
-        addItem('gravel', 1);
-        return { ok:true, mined:true, drop:'gravel', msg:'砂利を手に入れた。' };
-      }
-      return { ok:true, mined:true, drop:null, msg:'丸石を砕いた。砂利は出なかった。' };
-    }
-    if(block === 'gravel' && isShovelLike(tool)){
-      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
-      setBlockAt(dim, x, y, 'empty');
-      if(Math.random() < 1/16){
-        addItem('flint', 1);
-        return { ok:true, mined:true, drop:'flint', msg:'火打石を手に入れた。' };
-      }
-      return { ok:true, mined:true, drop:null, msg:'砂利を砕いた。火打石は出なかった。' };
-    }
-    return null;
-  }
-
-  function miningChance(block, item, inWater){
-    const mat = toolMaterialOf(item);
-    const tier = toolTierOf(item);
-    const type = toolTypeOf(item);
-
-    if(item === 'gold_alltools') return 1;
-    if(type === 'alltools'){
-      if(mat === 'wood') return 1/8;
-      if(mat === 'stone') return 1/4;
-      if(mat === 'iron') return 1/2;
-      if(mat === 'gold') return 1;
-      if(mat === 'diamond') return 1;
-      return 1/16;
-    }
-    if(block === 'tnt') return 1;
-    if(block === 'nether_portal') return 0;
-    if(block === 'water' || block === 'lava') return 0;
-    if(block === 'fire') return 1;
-
-    if(block === 'stone'){
-      if(type === 'none') return 1/16;
-      if(!isPickLike(item)) return 0;
-      return baseMineRate(mat);
-    }
-    if(block === 'cobblestone'){
-      if(type === 'none') return 1/16;
-      if(isShovelLike(item)) return 1/16;
-      if(!isPickLike(item)) return 0;
-      return baseMineRate(mat);
-    }
-    if(block === 'gravel'){
-      if(type === 'none') return 1/16;
-      if(!isShovelLike(item)) return 0;
-      return baseMineRate(mat);
-    }
-
-    const rule = mineRule(block);
-    if(!rule) return 1/16;
-    if(rule.tool === 'special') return 0;
-
-    const proper =
-      (rule.tool === 'shovel' && isShovelLike(item)) ||
-      (rule.tool === 'axe' && isAxeLike(item)) ||
-      (rule.tool === 'pickaxe' && isPickLike(item)) ||
-      (rule.tool === 'sword' && isSwordLike(item));
-
-    if(rule.tool !== 'any' && !proper) return isSoftMineBlock(block) ? 1/16 : 0;
-    if(rule.minTier && tier < rule.minTier) return 0;
-    let chance = baseMineRate(mat);
-    if(inWater) chance *= 0.5;
-    return chance;
-  }
-  function dropForBlock(block){
-    const rule = mineRule(block);
-    return rule ? (rule.drop || block) : block;
-  }
-
-  function updateHeatAndLiquids(dt){
-    const p = currentPos();
-    const block = getBlockAt(state.dim,p.x,p.y);
-    const nowFire = block === 'fire';
-    const nowLava = block === 'lava';
-    const nowWater = block === 'water';
-
-    if(nowWater){
-      state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0;
-    }
-    if(nowLava && state.prevBlock !== 'lava'){
-      hurtPlayer(2,'溶岩に入った。');
-      state.lavaAcc = 0;
-    }
-    if(state.prevBlock === 'fire' && !nowFire){ state.burnRemain = 5; state.burnAcc = 0; }
-    if(state.prevBlock === 'lava' && !nowLava){ state.burnRemain = 5; state.burnAcc = 0; }
-
-    if(nowFire){
-      state.fireAcc += dt;
-      while(state.fireAcc >= 0.5){
-        state.fireAcc -= 0.5;
-        hurtPlayer(0.5,'火でダメージを受けた。');
-      }
-    }else state.fireAcc = 0;
-
-    if(nowLava){
-      state.lavaAcc += dt;
-      while(state.lavaAcc >= 0.1){
-        state.lavaAcc -= 0.1;
-        if(Math.random() < 0.5) hurtPlayer(0.5,'溶岩でダメージを受けた。');
-      }
-    }else state.lavaAcc = 0;
-
-    if(!nowFire && !nowLava && state.burnRemain > 0){
-      state.burnAcc += dt;
-      while(state.burnAcc >= 1 && state.burnRemain > 0){
-        state.burnAcc -= 1;
-        state.burnRemain -= 1;
-        hurtPlayer(0.5,'熱でダメージを受けた。');
-      }
-    }
-    state.prevBlock = block;
-  }
-
-  function isProperTargetForTool(block,item){
-    if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire') return false;
-    if(block === 'nether_portal') return false;
-    if(block === 'cobblestone' && isShovelLike(item)) return true;
-    const rule = mineRule(block);
-    if(!rule) return false;
-    if(rule.tool === 'any') return true;
-    if(rule.tool === 'shovel') return isShovelLike(item);
-    if(rule.tool === 'axe') return isAxeLike(item);
-    if(rule.tool === 'pickaxe') return isPickLike(item);
-    if(rule.tool === 'sword') return isSwordLike(item);
-    return false;
-  }
-
-  function mineOne(dim,x,y,tool,inWater,forceAll=false){
-    const block = getBlockAt(dim,x,y);
-    if(block === 'empty') return { ok:false, mined:false };
-    if(block === 'nether_portal') return { ok:false, mined:false, msg:'ネザーゲートブロックはTNTでしか壊せない。' };
-    if(block === 'water' || block === 'lava') return { ok:false, mined:false, msg:'液体は掘れない。' };
-    if(block === 'fire'){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'炎を消した。' }; }
-
-    if((block === 'stone' || block === 'cobblestone') && toolTypeOf(tool) === 'none'){
-      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
-      setBlockAt(dim,x,y,'empty');
-      return { ok:true, mined:true, msg:'石を砕いた。' };
-    }
-
-    const special = mineSpecialCobbleLike(block, tool, dim, x, y);
-    if(special) return special;
-
-    if(block === 'tnt'){
-      setBlockAt(dim,x,y,'empty');
-      addItem('tnt',1);
-      return { ok:true, mined:true, drop:'tnt', msg:'TNTを手に入れた。' };
-    }
-
-    if(block === 'obsidian' && !forceAll){
-      const chance = miningChance(block,tool,inWater);
-      if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
-      if(Math.random() > chance) return { ok:false, mined:false, msg:'硬すぎる。' };
-      setBlockAt(dim,x,y,'empty');
-      addItem('obsidian',1);
-      return { ok:true, mined:true, drop:'obsidian', msg:'黒曜石を手に入れた。' };
-    }
-
-    const rule = mineRule(block);
-    if(!rule){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'壊した。' }; }
-
-    const chance = miningChance(block,tool,inWater);
-    if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
-    if(Math.random() > chance) return { ok:false, mined:false, msg:'空振りした。' };
-
-    setBlockAt(dim,x,y,'empty');
-    const dropItem = rule.drop || block;
-    if(dropItem && block !== 'water' && block !== 'lava' && block !== 'fire') addItem(dropItem,1);
-    if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
-    return { ok:true, mined:true, drop:dropItem, msg:`${displayName(dropItem || block)} を手に入れた。` };
-  }
-
-  function attackEnemy(m){
-    if(state.attackCd > 0){ setMsg('まだ殴れない。'); return; }
-    const dmg = swordDamage(state.heldItem);
-    m.hp -= dmg;
-    state.attackCd = 1;
-    breakGoldIfNeeded(state.heldItem,'attack');
-    if(m.hp <= 0){
-      m.dead = true;
-      if(m.type === 'creeper') addItem('gunpowder', 1 + (Math.random()<0.5 ? 1 : 0));
-      setMsg(`${m.type === 'zombie' ? 'ゾンビ' : 'クリーパー'}を倒した。`);
-    }else{
-      if(Math.random() < 0.5){
-        const p = currentPos();
-        const away = state.dim===DIM.OVERWORLD ? Math.sign(m.x - p.x) || state.facing : Math.sign(m.y - p.y) || state.facing;
-        if(state.dim===DIM.OVERWORLD){
-          const nx = Math.round(m.x + away);
-          if(PASSABLE.has(getBlockAt(state.dim,nx,m.y))) m.x += away;
-        }else{
-          const ny = Math.round(m.y + away);
-          if(PASSABLE.has(getBlockAt(state.dim,m.x,ny))) m.y += away;
-        }
-      }
-      setMsg(`${m.type === 'zombie' ? 'ゾンビ' : 'クリーパー'}に${dmg}ダメージ。`);
-    }
-    refreshAllMenus(); render();
-  }
-
-  function mine(){
-    const targetMob = enemyAtTarget();
-    if(targetMob){ attackEnemy(targetMob); return; }
-
-    const p = currentPos();
-    const t = currentTarget();
-    const inWater = getBlockAt(state.dim,p.x,p.y) === 'water';
-    const held = state.heldItem;
-    const mat = toolMaterialOf(held);
-    const type = toolTypeOf(held);
-
-    if(held === 'gold_alltools'){
-      let cx = t.x, cy = t.y, firstMsg = null;
-      while(getBlockAt(state.dim,cx,cy) !== 'empty'){
-        const res = mineOne(state.dim,cx,cy,held,inWater,true);
-        if(!res.ok) break;
-        if(!firstMsg && res.msg) firstMsg = res.msg;
-        if(activeAxis()==='x') cx += state.facing;
-        else cy += state.facing;
-      }
-      breakGoldIfNeeded(held,'mine');
-      refreshAllMenus(); render(); setMsg(firstMsg || '掘った。');
-      return;
-    }
-
-    if(mat === 'gold' && (type === 'pickaxe' || type === 'axe' || type === 'shovel' || type === 'alltools')){
-      let cx = t.x, cy = t.y, firstMsg = null;
-      while(getBlockAt(state.dim,cx,cy) !== 'empty' && isProperTargetForTool(getBlockAt(state.dim,cx,cy), held)){
-        const res = mineOne(state.dim,cx,cy,held,inWater,false);
-        if(!res.ok) break;
-        if(!firstMsg && res.msg) firstMsg = res.msg;
-        if(activeAxis()==='x') cx += state.facing;
-        else cy += state.facing;
-      }
-      breakGoldIfNeeded(held,'mine');
-      refreshAllMenus(); render(); setMsg(firstMsg || '掘った。');
-      return;
-    }
-
-    const res = mineOne(state.dim,t.x,t.y,held,inWater,false);
-    if(!res.ok){ setMsg(res.msg || '空振りした。'); return; }
-    breakGoldIfNeeded(held,'mine');
-    refreshAllMenus(); render();
-    setMsg(res.msg || `${displayName(res.drop || getBlockAt(state.dim,t.x,t.y))} を手に入れた。`);
-  }
-
-  function scoopBucket(targetBlock){
-    if(state.heldItem !== 'bucket') return false;
-    const t = currentTarget();
-    if(targetBlock === 'water'){
-      setBlockAt(state.dim,t.x,t.y,'empty');
-      removeItem('bucket',1); addItem('water_bucket',1);
-      return true;
-    }
-    if(targetBlock === 'lava'){
-      setBlockAt(state.dim,t.x,t.y,'empty');
-      removeItem('bucket',1); addItem('lava_bucket',1);
-      return true;
-    }
-    return false;
-  }
-
-  function placeOrUse(){
-    const t = currentTarget();
-    const block = getBlockAt(state.dim,t.x,t.y);
-
-    if(state.heldItem === 'bucket' && (block === 'water' || block === 'lava')){
-      if(scoopBucket(block)){
-        refreshAllMenus(); render();
-        setMsg(block === 'water' ? '水をすくった。' : '溶岩をすくった。');
-      }
-      return;
-    }
-
-    if(state.heldItem === 'air_item'){
-      if(block === 'empty'){ setMsg('もう無だ。'); return; }
-      setBlockAt(state.dim,t.x,t.y,'empty');
-      removeItem('air_item',1);
-      refreshAllMenus(); render();
-      setMsg('無に置き換えた。');
-      return;
-    }
-
-    if(state.heldItem === 'water_bucket' || state.heldItem === 'lava_bucket'){
-      const liquid = state.heldItem === 'water_bucket' ? 'water' : 'lava';
-
-      if(state.dim === DIM.NETHER && state.heldItem === 'water_bucket'){
-        removeItem('water_bucket',1);
-        addItem('bucket',1);
-        setMsg('水は蒸発した。');
-        render();
-        return;
-      }
-
-      if(block === 'water' || block === 'lava'){
-        if(block !== liquid){
-          setBlockAt(state.dim,t.x,t.y,'obsidian');
-          removeItem(state.heldItem,1);
-          addItem('bucket',1);
-          refreshAllMenus(); render();
-          setMsg('黒曜石ができた。');
-          return;
-        }
-      }
-
-      if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire' || block === 'dirt' || block === 'grass' || block === 'wood' || block === 'leaf' || block === 'stone' || block === 'sand' || block === 'plank' || block === 'crafting_table' || block === 'furnace' || block === 'netherrack' || block === 'obsidian' || block === 'cobblestone' || block === 'soul_sand' || block === 'ancient_debris'){
-        setBlockAt(state.dim,t.x,t.y,liquid);
-        removeItem(state.heldItem,1);
-        addItem('bucket',1);
-        refreshAllMenus(); render();
-        setMsg(`${displayName(liquid)} を置いた。`);
-        return;
-      }
-
-      setMsg('そこには置けない。');
-      return;
-    }
-
-    if(state.heldItem === 'flint_and_steel'){
-      if(block === 'obsidian'){
-        setBlockAt(state.dim,t.x,t.y,'nether_portal');
-        refreshAllMenus(); render();
-        setMsg('ネザーゲートを起動した。');
-        return;
-      }
-      if(block === 'tnt'){
-        const w = world();
-        w.tnt.set(`${t.x},${t.y}`, {lit:true, age:0});
-        setMsg('TNTに火をつけた。');
-        render();
-        return;
-      }
-      if(block === 'empty'){
-        setBlockAt(state.dim,t.x,t.y,'fire');
-        refreshAllMenus(); render();
-        setMsg('火をつけた。');
-        return;
-      }
-      setMsg('そこでは使えない。');
-      return;
-    }
-
-    if(state.heldItem === 'nether_portal'){
-      if(block === 'empty'){
-        setBlockAt(state.dim,t.x,t.y,'nether_portal');
-        removeItem('nether_portal',1);
-        refreshAllMenus(); render();
-        setMsg('ネザーゲートブロックを置いた。');
-      }else setMsg('そこには置けない。');
-      return;
-    }
-
-    if(state.heldItem === 'tnt'){
-      if(block === 'empty'){
-        setBlockAt(state.dim,t.x,t.y,'tnt');
-        removeItem('tnt',1);
-        refreshAllMenus(); render();
-        setMsg('TNTを置いた。');
-      }else setMsg('そこには置けない。');
-      return;
-    }
-
-    if(!state.heldItem){ setMsg('手持ちがない。'); return; }
-
-    if(PLACEABLE.has(state.heldItem)){
-      if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire'){
-        const placed = state.heldItem;
-        setBlockAt(state.dim,t.x,t.y,placed);
-        removeItem(placed,1);
-        refreshAllMenus(); render();
-        setMsg(`${displayName(placed)} を置いた。`);
-        return;
-      }
-      setMsg('そこには置けない。');
-      return;
-    }
-
-    setMsg('それは置けない。');
-  }
-
-  function craftFromGrid(){
-    const recipe = findMatchingRecipe();
-    if(!recipe){ setMsg('合うレシピがない。'); return; }
-    state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
-    for(const [item,n] of Object.entries(recipe.give)) addItem(item,n);
-    refreshAllMenus(); render();
-    setMsg(`${recipe.title} を作った。`);
-  }
-  function clearCraftGrid(){
-    for(const item of state.craftGrid){ if(item) addItem(item,1); }
-    state.craftGrid = Array(state.craftGridSize * state.craftGridSize).fill(null);
-    refreshAllMenus(); render();
-    setMsg('クラフト欄を全部消した。');
-  }
-
-  function fuelChance(fuelItem){
-    if(fuelItem === 'coal') return 0.5;
-    if(fuelItem === 'wood') return 1/32;
-    return 0;
-  }
-  function collectOutput(){
-    const p = currentPos();
-    const f = getFurnaceState(world(),p.x,p.y);
-    if(!f.output){ setMsg('出力は空。'); return; }
-    addItem(f.output.item, f.output.count);
-    f.output = null;
-    refreshAllMenus(); render();
-    setMsg('できあがりを回収した。');
-  }
-  function furnaceTakeOrPut(slotName){
-    const p = currentPos();
-    const f = getFurnaceState(world(),p.x,p.y);
-    if(slotName === 'output'){ collectOutput(); return; }
-    if(f[slotName]){
-      const item = f[slotName].item;
-      f[slotName].count -= 1;
-      if(f[slotName].count <= 0) f[slotName] = null;
-      addItem(item,1);
-      refreshAllMenus(); render();
-      return;
-    }
-    if(!state.heldItem){ setMsg('先に所持品を選んでね。'); return; }
-    const valid = slotName === 'input'
-      ? ['cobblestone','raw_iron','raw_gold','ancient_debris'].includes(state.heldItem)
-      : slotName === 'fuel'
-        ? ['coal','wood'].includes(state.heldItem)
-        : false;
-    if(!valid){ setMsg(slotName === 'input' ? 'そのアイテムは入力できない。' : 'そのアイテムは燃料にできない。'); return; }
-    const item = state.heldItem;
-    if(!f[slotName]){
-      f[slotName] = { item, count:1 };
-      removeItem(item,1);
-    }else if(f[slotName].item === item){
-      f[slotName].count += 1;
-      removeItem(item,1);
-    }else{
-      setMsg('そのスロットには別のアイテムが入っている。');
-      return;
-    }
-    refreshAllMenus(); render();
-  }
-  function smeltOnce(){
-    if(!furnaceEnabled()){ setMsg('かまどの前で使ってね。'); return; }
-    const p = currentPos();
-    const f = getFurnaceState(world(),p.x,p.y);
-    if(!f.input){ setMsg('物を入れるところが空。'); return; }
-    if(!f.fuel){ setMsg('燃料がない。'); return; }
-    const inputItem = f.input.item;
-    const outItem = { cobblestone:'stone', raw_iron:'iron_ingot', raw_gold:'gold_ingot', ancient_debris:'ancient_debris' }[inputItem];
-    if(!outItem){ setMsg('それは精錬できない。'); return; }
-    const chance = fuelChance(f.fuel.item);
-    if(chance <= 0){ setMsg('その燃料は使えない。'); return; }
-    if(f.output && f.output.item !== outItem){ setMsg('出力欄に別のものが入っている。'); return; }
-    f.fuel.count -= 1;
-    if(f.fuel.count <= 0) f.fuel = null;
-    const success = Math.random() < chance;
-    if(success){
-      if(!f.output) f.output = { item:outItem, count:0 };
-      f.output.count += 1;
-      f.input.count -= 1;
-      if(f.input.count <= 0) f.input = null;
-      setMsg(`${displayName(outItem)} ができた。`);
-    }else setMsg('精錬に失敗した。');
-    refreshAllMenus(); render();
-  }
-
-  function openInv(){
-    invOverlay.classList.add('open');
-    invOverlay.setAttribute('aria-hidden','false');
-    document.body.style.overflow = 'hidden';
-    refreshAllMenus();
-    updateLayout();
-    requestAnimationFrame(() => { tabContent.scrollTop = 0; invPanel.scrollTop = 0; });
-  }
-  function closeInv(){
-    invOverlay.classList.remove('open');
-    invOverlay.setAttribute('aria-hidden','true');
-    document.body.style.overflow = '';
-  }
-
-  let confirmState = { onYes:null, onNo:null };
-  function openConfirm(text, onYes, onNo, yesLabel='はい', noLabel='いいえ'){
-    confirmState.onYes = onYes || null;
-    confirmState.onNo = onNo || null;
-    confirmText.textContent = text;
-    confirmYes.textContent = yesLabel;
-    confirmNo.textContent = noLabel;
-    confirmOverlay.classList.add('open');
-  }
-  function closeConfirm(){
-    confirmOverlay.classList.remove('open');
-    confirmState.onYes = null;
-    confirmState.onNo = null;
-  }
-
-  function move(dx){
-    state.facing = dx < 0 ? -1 : 1;
-    if(state.soulSlow > 0 && Math.random() < 0.5){ setMsg('足元が重い。'); render(); return; }
-    const p = currentPos();
-    const nx = activeAxis()==='x' ? p.x + dx : p.x;
-    const ny = activeAxis()==='y' ? p.y + dx : p.y;
-    const b = getBlockAt(state.dim,nx,ny);
-    if(b !== 'empty' && !currentBlockPassable(b)){ setMsg(`当たり判定: ${displayName(b)} がある。`); render(); return; }
-    p.x = nx; p.y = ny;
-    setMsg(`${activeAxis()} = ${activeCoord()}`);
-    render();
-  }
-
-  function render(){
-    const p = currentPos();
-    const w = world();
-    line.innerHTML = '';
-    const start = activeCoord() - 3;
-    const fixed = fixedCoord();
-
-    for(let i=0;i<7;i++){
-      const c = start + i;
-      const x = activeAxis()==='x' ? c : fixed;
-      const y = activeAxis()==='x' ? fixed : c;
-      const block = getBlockAt(state.dim,x,y);
-      const cell = document.createElement('div');
-      cell.className = 'cell ' + block;
-      cell.style.backgroundImage = '';
-
-      if(TEXTURE_STATE[block] === undefined) requestTexture(block);
-
-      const tex = TEXTURE_MAP[block];
-      if(tex){
-        cell.style.backgroundImage = `url("${tex}")`;
-        cell.style.color = 'transparent';
-      }else{
-        cell.style.color = '';
-        if(block === 'fire'){
-          cell.textContent = ((Math.floor((w.fire.get(`${x},${y}`) || 0) * 8) % 2 === 0) ? '🔥' : '✦');
-        }else if(block === 'tnt'){
-          const info = normalizeTntValue(w.tnt.get(`${x},${y}`));
-          cell.textContent = info.lit ? (Math.floor(info.age * 10) % 2 === 0 ? '💣' : 'T') : 'T';
-        }else{
-          cell.textContent = BLOCKS[block]?.icon || '';
-        }
-      }
-
-      if(x === currentTarget().x && y === currentTarget().y) cell.classList.add('frontTarget');
-
-      const corpse = w.corpses.get(`${x},${y}`);
-      if(corpse) cell.classList.add('grave');
-
-      const mobsHere = mobsInCell(x,y);
-      const mob = mobsHere.length ? mobsHere[0] : null;
-      if(mob){
-        const mobMark = document.createElement('div');
-        mobMark.className = 'playerMark';
-        mobMark.textContent = mob.type === 'zombie' ? '🧟' : (mob.ignited ? '💥' : '👾');
-        cell.appendChild(mobMark);
-      }
-
-      if(corpse){
-        const gr = document.createElement('div');
-        gr.className = 'graveBadge';
-        gr.textContent = `☠ ${Math.max(0, Math.ceil(300 - corpse.age))}`;
-        cell.appendChild(gr);
-      }
-
-      if(!mob && x===p.x && y===p.y){
-        cell.classList.add('player');
-        const mark = document.createElement('div');
-        mark.className = 'playerMark';
-        mark.textContent = '🙂';
-        cell.appendChild(mark);
-        const badge = document.createElement('div');
-        badge.className = 'faceBadge';
-        badge.textContent = state.facing === 1 ? '▶' : '◀';
-        cell.appendChild(badge);
-      }
-
-      line.appendChild(cell);
-    }
-
-    const breathLine = state.breath < state.maxBreath ? `<br>呼吸 ${fmtHalf(state.breath)}/${state.maxBreath}` : '';
-    posText.innerHTML =
-      `${state.dim === DIM.OVERWORLD ? 'Overworld' : 'Nether'} ${activeAxis()} = ${activeCoord()}<br>` +
-      `向き <span class="dirStrong">${state.facing === -1 ? '←' : '→'}</span> / 手持ち ${state.heldItem ? stackText(state.heldItem) : 'なし'}<br>` +
-      `体力 ${fmtHalf(state.hp)}/${state.maxHp}${breathLine}<br>` +
-      `${timeText()} / ${difficultyLabel()}${hardcore() ? ' / Hardcore' : ''}`;
-
-    updateMineButtonLabel();
-    placeBtn.textContent = '置く';
-
-    if(invOverlay.classList.contains('open')){
-      refreshCraftUI();
-      refreshFurnaceUI();
-      refreshCommandVisibility();
-    }
-    updateTheme();
-
-    if(state.portalShake > 0){
-      const t = state.now;
-      const amp = 1 + state.portalShake * 14;
-      const x = Math.sin(t / 63) * amp + Math.sin(t / 17) * (amp * 0.35);
-      const y = Math.cos(t / 71) * amp + Math.cos(t / 29) * (amp * 0.35);
-      const rot = Math.sin(t / 85) * state.portalShake * 1.6;
-      appEl.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`;
-    }else{
-      appEl.style.transform = '';
-    }
-  }
-
-  function snapshotGame(){
-    return {
-      version:1,
-      dim:state.dim,
-      difficulty:state.difficulty,
-      pos:deep(state.pos),
-      facing:state.facing,
-      hp:state.hp, maxHp:state.maxHp,
-      breath:state.breath, maxBreath:state.maxBreath,
-      regenAcc:state.regenAcc, downedAcc:state.downedAcc, attackCd:state.attackCd,
-      fireAcc:state.fireAcc, lavaAcc:state.lavaAcc, burnRemain:state.burnRemain, burnAcc:state.burnAcc, waterDamageAcc:state.waterDamageAcc,
-      soulSlow:state.soulSlow, prevBlock:state.prevBlock,
-      gameTime:state.gameTime, nightSpawnAcc:state.nightSpawnAcc, portalAcc:state.portalAcc, portalRecentTravel:state.portalRecentTravel, portalShake:state.portalShake,
-      inventory:deep(state.inventory), infiniteItems:[...state.infiniteItems], heldItem:state.heldItem,
-      keepInventory:state.keepInventory, cmdUnlocked:state.cmdUnlocked,
-      craftGridSize:state.craftGridSize, craftGrid:deep(state.craftGrid),
-      inventorySearch:state.inventorySearch, favoriteItems:deep(state.favoriteItems),
-      worlds:{ overworld:serializeWorld(worlds[DIM.OVERWORLD]), nether:serializeWorld(worlds[DIM.NETHER]) }
-    };
-  }
-  function applySnapshot(data){
-    if(!data) return;
-    state.dim = data.dim || DIM.OVERWORLD;
-    state.difficulty = data.difficulty || 'normal';
-    state.pos = data.pos || state.pos;
-    state.facing = data.facing ?? 1;
-    state.hp = data.hp ?? 10; state.maxHp = data.maxHp ?? 10;
-    state.breath = data.breath ?? 10; state.maxBreath = data.maxBreath ?? 10;
-    state.regenAcc = data.regenAcc ?? 0; state.downedAcc = data.downedAcc ?? 0; state.attackCd = data.attackCd ?? 0;
-    state.fireAcc = data.fireAcc ?? 0; state.lavaAcc = data.lavaAcc ?? 0; state.burnRemain = data.burnRemain ?? 0; state.burnAcc = data.burnAcc ?? 0; state.waterDamageAcc = data.waterDamageAcc ?? 0;
-    state.soulSlow = data.soulSlow ?? 0; state.prevBlock = data.prevBlock ?? 'empty';
-    state.gameTime = data.gameTime ?? 0; state.nightSpawnAcc = data.nightSpawnAcc ?? 0;
-    state.portalAcc = data.portalAcc ?? 0; state.portalRecentTravel = !!data.portalRecentTravel; state.portalShake = data.portalShake ?? 0;
-    state.inventory = data.inventory || {}; state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
-    state.keepInventory = !!data.keepInventory; state.cmdUnlocked = !!data.cmdUnlocked;
-    state.craftGridSize = data.craftGridSize || 2; state.craftGrid = data.craftGrid || Array(state.craftGridSize * state.craftGridSize).fill(null);
-    state.inventorySearch = data.inventorySearch || ''; state.favoriteItems = data.favoriteItems || [];
-    const w = data.worlds || {};
-    worlds[DIM.OVERWORLD] = deserializeWorld(w.overworld, DIM.OVERWORLD);
-    worlds[DIM.NETHER] = deserializeWorld(w.nether, DIM.NETHER);
-    clearLineCaches();
-    updateTheme();
-    normalizeHeld();
-    refreshCommandVisibility();
-  }
-
-  function saveSaveSlots(){ saveJSON(SAVE_KEY, saves); }
-
-  function renderWorldList(){
-    worldGrid.innerHTML = '';
-    if(!saves.length){
-      const empty = document.createElement('div');
-      empty.className = 'small';
-      empty.textContent = '保存済みワールドはまだない。';
-      worldGrid.appendChild(empty);
-      createWorldBtn.style.display = 'inline-flex';
-      return;
-    }
-    createWorldBtn.style.display = saves.length < 10 ? 'inline-flex' : 'none';
-    saves.forEach(slot => {
-      const card = document.createElement('div');
-      card.className = 'worldCard';
-
-      const thumb = document.createElement('div');
-      thumb.className = 'worldThumb';
-      if(slot.image){
-        const img = document.createElement('img');
-        img.src = slot.image;
-        thumb.appendChild(img);
-      }
-      const ph = document.createElement('div');
-      ph.className = 'ph';
-      ph.textContent = slot.name || '無題のワールド';
-      thumb.appendChild(ph);
-
-      const row = document.createElement('div');
-      row.className = 'worldHeaderRow';
-      if(activeSaveId === slot.id){
-        const b = document.createElement('span');
-        b.className = 'badge';
-        b.textContent = '現在';
-        row.appendChild(b);
-      }
-      const dimBadge = document.createElement('span');
-      dimBadge.className = 'badge';
-      dimBadge.textContent = (slot.data?.dim === DIM.NETHER) ? 'Nether' : 'Overworld';
-      row.appendChild(dimBadge);
-
-      const diffBadge = document.createElement('span');
-      diffBadge.className = 'badge';
-      diffBadge.textContent = (slot.difficulty && DIFFICULTIES[slot.difficulty]) ? DIFFICULTIES[slot.difficulty].label : 'ノーマル';
-      row.appendChild(diffBadge);
-
-      if(slot.locked){
-        const lb = document.createElement('span');
-        lb.className = 'badge lockBadge';
-        lb.textContent = 'LOCKED';
-        row.appendChild(lb);
-      }
-
-      const name = document.createElement('div');
-      name.className = 'worldName';
-      name.textContent = slot.name || '無題のワールド';
-
-      const meta = document.createElement('div');
-      meta.className = 'worldMeta';
-      const ts = slot.updatedAt ? new Date(slot.updatedAt).toLocaleString() : '—';
-      meta.textContent = `更新: ${ts}`;
-
-      const actions = document.createElement('div');
-      actions.className = 'worldActions';
-
-      const open = document.createElement('button');
-      open.className = 'loadBtn';
-      open.textContent = slot.locked ? '開けない' : '開く';
-      open.disabled = !!slot.locked;
-      open.addEventListener('click', () => loadWorldById(slot.id));
-
-      const rename = document.createElement('button');
-      rename.className = 'miniBtn';
-      rename.textContent = '名前変更';
-      rename.addEventListener('click', () => {
-        const next = prompt('ワールド名', slot.name || '無題のワールド');
-        if(next === null) return;
-        slot.name = next.trim() || slot.name || '無題のワールド';
-        slot.updatedAt = Date.now();
-        saveSaveSlots();
-        renderWorldList();
-      });
-
-      const imgBtn = document.createElement('button');
-      imgBtn.className = 'miniBtn';
-      imgBtn.textContent = '画像';
-      imgBtn.addEventListener('click', () => {
-        worldImageInput.dataset.target = slot.id;
-        worldImageInput.click();
-      });
-
-      const dup = document.createElement('button');
-      dup.className = 'miniBtn';
-      dup.textContent = '複製';
-      dup.addEventListener('click', () => duplicateWorld(slot.id));
-
-      const del = document.createElement('button');
-      del.className = 'dangerBtn';
-      del.textContent = '削除';
-      del.addEventListener('click', () => {
-        openConfirm(
-          `「${slot.name || '無題のワールド'}」を削除する？`,
-          () => {
-            const idx = saves.findIndex(s => s.id === slot.id);
-            if(idx >= 0) saves.splice(idx,1);
-            if(activeSaveId === slot.id) activeSaveId = null;
-            saveSaveSlots();
-            renderWorldList();
-            if(!saves.length){
-              setMsg('保存済みワールドがなくなった。新しいワールドを作ってね。');
-            }
-          },
-          null,
-          '削除する',
-          'やめる'
-        );
-      });
-
-      actions.append(open,rename,imgBtn,dup,del);
-      card.append(row,thumb,name,meta,actions);
-      worldGrid.appendChild(card);
-    });
-  }
-  function openWorldListPanel(){
-    renderWorldList();
-    worldOverlay.classList.add('open');
-    worldOverlay.setAttribute('aria-hidden','false');
-  }
-  function closeWorldListPanel(){
-    worldOverlay.classList.remove('open');
-    worldOverlay.setAttribute('aria-hidden','true');
-  }
-  function loadWorldById(id){
-    const slot = saves.find(s => s.id === id);
-    if(!slot) return;
-    if(slot.locked){
-      setMsg('ハードコアのワールドは開けない。');
-      return;
-    }
-    applySnapshot(slot.data);
-    activeSaveId = id;
-    closeWorldListPanel();
-    refreshAllMenus(); render();
-    setMsg(`「${slot.name || '無題のワールド'}」を開いた。`);
-  }
-  function duplicateWorld(id){
-    if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
-    const slot = saves.find(s => s.id === id);
-    if(!slot) return;
-    const copy = deep(slot);
-    copy.id = uid();
-    copy.name = `${copy.name || '無題のワールド'} (copy)`;
-    copy.updatedAt = Date.now();
-    copy.data = deep(slot.data);
-    copy.locked = false;
-    saves.push(copy);
-    saveSaveSlots();
-    renderWorldList();
-  }
-  function startFreshWorld(difficulty='normal'){
-    worlds[DIM.OVERWORLD] = makeWorld(DIM.OVERWORLD);
-    worlds[DIM.NETHER] = makeWorld(DIM.NETHER);
-    clearLineCaches();
-    state.dim = DIM.OVERWORLD;
-    state.difficulty = difficulty;
-    state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
-    state.facing = 1;
-    state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
-    state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
-    state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
-    state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
-    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
-    state.keepInventory = false;
-    state.cmdUnlocked = false;
-    state.craftGridSize = 2; state.craftGrid = Array(4).fill(null);
-    buildSpawnArea(); ensureSpawnResources(); normalizeHeld(); updateTheme(); refreshAllMenus(); render();
-    setMsg(`新しい世界を作った。${DIFFICULTIES[difficulty]?.label || difficulty}`);
-  }
-
-  function openDifficultyPanel(){
-    pendingDifficulty = 'normal';
-    difficultyText.textContent = '新しいワールドの難易度を選んでね。';
-    difficultyOverlay.classList.add('open');
-    difficultyOverlay.setAttribute('aria-hidden','false');
-  }
-  function closeDifficultyPanel(){
-    difficultyOverlay.classList.remove('open');
-    difficultyOverlay.setAttribute('aria-hidden','true');
-  }
-
-  function saveCurrentWorld(){
-    const snap = snapshotGame();
-    const existing = saves.find(s => s.id === activeSaveId);
-    const name = existing?.name || `ワールド ${saves.length + 1}`;
-    if(activeSaveId){
-      const idx = saves.findIndex(s => s.id === activeSaveId);
-      if(idx >= 0) saves[idx] = { ...saves[idx], name, difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked: !!saves[idx].locked };
-    }else{
-      if(saves.length >= 10){ setMsg('セーブは10個まで。'); return false; }
-      const slot = { id:uid(), name, image:'', difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked:false };
-      saves.push(slot);
-      activeSaveId = slot.id;
-    }
-    saveSaveSlots();
-    setMsg('セーブしました！終了して一覧を開きますか？');
-    openConfirm(
-      'セーブしました！終了して一覧を開きますか？',
-      () => openWorldListPanel(),
-      null,
-      'はい',
-      'いいえ'
-    );
-    return true;
-  }
-  function saveWorldToSlotImageFromInput(file){
-    const id = worldImageInput.dataset.target;
-    if(!id || !file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const slot = saves.find(s => s.id === id);
-      if(!slot) return;
-      slot.image = String(reader.result || '');
-      slot.updatedAt = Date.now();
-      saveSaveSlots();
-      renderWorldList();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function addLongPress(el,onTap,onLong){
-    let timer = null;
-    let longed = false;
-    el.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      longed = false;
-      timer = setTimeout(() => { longed = true; onLong(); }, 500);
-    });
-    const clear = () => { if(timer) clearTimeout(timer); timer = null; };
-    el.addEventListener('pointerup', () => { clear(); if(!longed) onTap(); });
-    el.addEventListener('pointercancel', clear);
-    el.addEventListener('pointerleave', clear);
-  }
-
   function updateTheme(){
     document.body.style.background = state.dim === DIM.NETHER ? 'linear-gradient(#3b1111,#1a0606)' : 'linear-gradient(#171b25,#0f1218)';
   }
 
   function refreshCommandVisibility(){
-    const canUse = state.cmdUnlocked && !hardcore();
+    const canUse = state.cmdUnlocked && !hardcore() && hasWorld;
     cmdLockPrompt.style.display = canUse ? 'none' : 'block';
     cmdUnlockedBox.style.display = canUse ? 'block' : 'none';
     cmdInput.disabled = !canUse;
-    unlockCmdBtn.disabled = hardcore();
+    unlockCmdBtn.disabled = hardcore() || !hasWorld;
     unlockCmdBtn.textContent = hardcore() ? 'ハードコアでは使えない' : 'コマンドのロックを解除';
     refreshCmdFavUI();
   }
@@ -4056,7 +2967,6 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     }
   }
   function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
-  function currentBlockPassable(block){ return PASSABLE.has(block); }
 
   function init(){
     buildSpawnArea();
@@ -4064,23 +2974,32 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     preloadTextures();
     updateLayout();
     updateTheme();
+
     if(saves.length > 0){
-      const first = saves.find(s => !s.locked);
+      const first = saves.find(s => !s.locked) || saves[0];
       if(first){
         applySnapshot(first.data);
         activeSaveId = first.id;
-      }else{
-        startFreshWorld('normal');
+        hasWorld = true;
       }
       openWorldListPanel();
-    }else{
+    }else if(!globalState.firstLaunchDone){
+      globalState.firstLaunchDone = true;
+      saveGlobal();
       startFreshWorld('normal');
+    }else{
+      hasWorld = false;
+      activeSaveId = null;
+      openWorldListPanel();
+      render();
+      setMsg('ワールドがありません。新しいワールドを作ってね。');
     }
+
     refreshAllMenus();
     refreshCommandVisibility();
     updateMineButtonLabel();
     render();
-    setMsg('準備完了。');
+    if(hasWorld) setMsg('準備完了。');
     requestAnimationFrame(tick);
   }
 
@@ -4089,20 +3008,24 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const dt = Math.min(0.05, (now - tick.last) / 1000);
     tick.last = now;
     state.now = now;
-    state.gameTime += dt;
-    state.soulSlow = Math.max(0, state.soulSlow - dt);
-    if(state.attackCd > 0) state.attackCd = Math.max(0, state.attackCd - dt);
-    updateNight(dt);
-    updateMobs(dt);
-    updateCorpses(dt);
-    updateTimedBlocks(dt);
-    updateLiquidFlow();
-    updateHeatAndLiquids(dt);
-    updateBreath(dt);
-    updatePlayerHealth(dt);
-    updatePortalTravel(dt);
-    updateMineButtonLabel();
-    render();
+    if(hasWorld){
+      state.gameTime += dt;
+      state.soulSlow = Math.max(0, state.soulSlow - dt);
+      if(state.attackCd > 0) state.attackCd = Math.max(0, state.attackCd - dt);
+      updateNight(dt);
+      updateMobs(dt);
+      updateCorpses(dt);
+      updateTimedBlocks(dt);
+      updateLiquidFlow();
+      updateHeatAndLiquids(dt);
+      updateBreath(dt);
+      updatePlayerHealth(dt);
+      updatePortalTravel(dt);
+      updateMineButtonLabel();
+      render();
+    }else{
+      render();
+    }
     requestAnimationFrame(tick);
   }
 
@@ -4143,8 +3066,8 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   });
 
   unlockCmdBtn.addEventListener('click', () => {
-    if(hardcore()){
-      setMsg('ハードコアではコマンドを使えない。');
+    if(hardcore() || !hasWorld){
+      setMsg('今はコマンドを使えない。');
       return;
     }
     openConfirm(
@@ -4244,7 +3167,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     else if(k === 'arrowright' || k === 'd'){ e.preventDefault(); move(1); }
     else if(k === ' ' || k === 'spacebar'){ e.preventDefault(); mine(); }
     else if(k === 'i'){ e.preventDefault(); invOverlay.classList.contains('open') ? closeInv() : openInv(); }
-    else if(k === 'r'){ e.preventDefault(); startFreshWorld('normal'); }
+    else if(k === 'r'){ e.preventDefault(); if(hasWorld) startFreshWorld('normal'); }
     else if(k === 'escape'){ closeInv(); closeConfirm(); closeWorldListPanel(); closeDifficultyPanel(); }
   }, { passive:false });
 
