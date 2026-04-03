@@ -44,9 +44,13 @@
     gap:8px;pointer-events:none;z-index:2
   }
   .hudBox{
-    background:rgba(28,33,46,.82);border:1px solid rgba(255,255,255,.08);
-    border-radius:14px;padding:8px 10px;backdrop-filter:blur(6px);
-    box-shadow:0 8px 20px rgba(0,0,0,.18);min-width:0
+    background:rgba(28,33,46,.82);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    padding:8px 10px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+    min-width:0
   }
   .hudLabel{font-size:11px;color:var(--muted)}
   .hudValue{
@@ -63,9 +67,7 @@
     display:flex;align-items:center;justify-content:center;position:relative;
     font-size:clamp(18px,5vw,28px);font-weight:800;user-select:none;flex:0 0 auto;
     border:1px solid rgba(255,255,255,.08);background:#1a1f2a;overflow:hidden;
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
+    background-size:cover;background-position:center;background-repeat:no-repeat
   }
   .cell.empty{background:linear-gradient(180deg,#171b24,#121620);color:#8d96b3}
   .cell.dirt{background:linear-gradient(180deg,#8a5a3d,#734a31)}
@@ -140,17 +142,18 @@
     min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
   }
   .ctrl:active{transform:translateY(1px);filter:brightness(1.07)}
-  #invOverlay,#worldOverlay,#confirmOverlay{
+  #invOverlay,#worldOverlay,#confirmOverlay,#difficultyOverlay{
     position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;
     z-index:1000;pointer-events:auto
   }
-  #invOverlay.open,#worldOverlay.open,#confirmOverlay.open{display:flex}
-  #invPanel,#worldPanel{
+  #invOverlay.open,#worldOverlay.open,#confirmOverlay.open,#difficultyOverlay.open{display:flex}
+  #invPanel,#worldPanel,#difficultyPanel{
     width:min(980px,100vw);max-height:min(86vh,820px);background:rgba(24,28,40,.98);
     border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid rgba(255,255,255,.08);
     box-shadow:0 -18px 40px rgba(0,0,0,.35);overflow:hidden;display:grid;grid-template-rows:auto 1fr;pointer-events:auto
   }
   #worldPanel{max-height:min(90vh,860px);border-radius:18px;width:min(1100px, calc(100vw - 16px))}
+  #difficultyPanel{max-height:min(72vh,620px);border-radius:18px;width:min(720px, calc(100vw - 16px))}
   .panelHeader{
     padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;
     border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)
@@ -159,7 +162,7 @@
     appearance:none;border:0;border-radius:12px;background:linear-gradient(180deg,#4e586f,#2c3346);
     color:#fff;padding:9px 12px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)
   }
-  #tabContent,#worldContent{min-height:0;overflow:auto;padding:12px;display:grid;gap:12px}
+  #tabContent,#worldContent,#difficultyContent{min-height:0;overflow:auto;padding:12px;display:grid;gap:12px}
   .section{
     padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)
   }
@@ -171,13 +174,11 @@
     border-radius:14px;padding:11px 12px;font-size:14px;outline:none
   }
   #invList,#cmdFavList{display:flex;flex-wrap:wrap;gap:8px}
-  .chip,.favCmd{
+  .chip,.favCmd,.diffBtn{
     appearance:none;border:0;font-size:12px;border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.08);white-space:nowrap;cursor:pointer;user-select:none;color:var(--text)
   }
-  .chip.sel{
-    outline:2px solid var(--accent);background:rgba(125,211,252,.16)
-  }
+  .chip.sel{outline:2px solid var(--accent);background:rgba(125,211,252,.16)}
   .chip.sel.alltools{
     outline:2px solid rgba(255,255,255,.95);border-color:rgba(255,255,255,.35);
     background:linear-gradient(90deg,rgba(255,70,130,.98),rgba(255,210,50,.98),rgba(70,255,140,.98),rgba(40,205,255,.98),rgba(185,90,255,.98),rgba(255,70,130,.98));
@@ -205,12 +206,12 @@
   .slot.has{background:linear-gradient(180deg,#263045,#1b2130)}
   .slot small{position:absolute;bottom:3px;right:4px;font-size:9px;color:var(--muted)}
   .craftBar{display:flex;gap:8px;flex-wrap:wrap}
-  .craftDo,.craftClear,.furnaceBtn,.cmdBtn,.cmdRun,.yesBtn,.noBtn,.saveBtn,.loadBtn,.miniBtn,.dangerBtn,.plainBtn{
+  .craftDo,.craftClear,.furnaceBtn,.cmdBtn,.cmdRun,.yesBtn,.noBtn,.saveBtn,.loadBtn,.miniBtn,.dangerBtn,.plainBtn,.diffBigBtn{
     appearance:none;border:0;border-radius:14px;padding:11px 14px;color:#fff;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)
   }
   .craftDo{background:linear-gradient(180deg,#4d6b52,#31483b)}
   .craftClear{background:linear-gradient(180deg,#555b73,#313649)}
-  .furnaceBtn,.cmdRun,.saveBtn,.loadBtn,.miniBtn,.plainBtn,.cmdBtn{background:linear-gradient(180deg,#4e586f,#2c3346)}
+  .furnaceBtn,.cmdRun,.saveBtn,.loadBtn,.miniBtn,.plainBtn,.cmdBtn,.diffBigBtn{background:linear-gradient(180deg,#4e586f,#2c3346)}
   .dangerBtn{background:linear-gradient(180deg,#7e3d3d,#532222)}
   .yesBtn{background:linear-gradient(180deg,#4b6a51,#30483a)}
   .noBtn{background:linear-gradient(180deg,#4e586f,#2c3346)}
@@ -233,11 +234,11 @@
   .cmdInputRow{display:grid;grid-template-columns:1fr auto;gap:8px}
   #cmdInput:disabled{opacity:.5}
   .cmdFavNote{color:var(--muted);font-size:11px;margin-top:8px}
-  #confirmBox{
+  #confirmBox,#difficultyBox{
     width:min(560px, calc(100vw - 24px));border-radius:18px;background:#1a2030;border:1px solid rgba(255,255,255,.10);
     padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.45)
   }
-  #confirmText{font-size:14px;line-height:1.5;color:#eef2ff}
+  #confirmText,#difficultyText{font-size:14px;line-height:1.5;color:#eef2ff}
   #confirmBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   #worldGrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
   .worldCard{
@@ -256,6 +257,23 @@
   .badge{
     display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-size:11px;color:var(--muted)
   }
+  .lockBadge{color:#ffcbcb}
+  .diffPanel{
+    display:grid;gap:10px
+  }
+  .diffGrid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px
+  }
+  .diffBigBtn{
+    min-height:66px;text-align:left;border-radius:16px
+  }
+  .diffBigBtn strong{display:block;font-size:14px;margin-bottom:4px}
+  .diffBigBtn span{display:block;font-size:11px;color:#d9e0ff;line-height:1.35;opacity:.95}
+  .diffBigBtn[data-d="peaceful"]{background:linear-gradient(180deg,#4e7c5d,#315040)}
+  .diffBigBtn[data-d="easy"]{background:linear-gradient(180deg,#496f8c,#2d3f54)}
+  .diffBigBtn[data-d="normal"]{background:linear-gradient(180deg,#5b6078,#32394d)}
+  .diffBigBtn[data-d="hard"]{background:linear-gradient(180deg,#7d4d4d,#533131)}
+  .diffBigBtn[data-d="hardcore"]{background:linear-gradient(180deg,#3d1010,#210707)}
   @media (min-width:900px){
     :root{--cell-size:72px;--gap:6px}
     .playerMark{font-size:28px}
@@ -272,7 +290,7 @@
   <div id="gameArea">
     <div id="hud">
       <div class="hudBox">
-        <div class="hudLabel">Position / Direction / Held / HP / Breath / Time</div>
+        <div class="hudLabel">Position / Direction / Held / HP / Breath / Time / Difficulty</div>
         <div class="hudValue" id="posText">Overworld x = 0</div>
       </div>
       <div class="hudBox">
@@ -368,7 +386,8 @@
               /time 〈昼or夜 or 00:00〜23:59〉<br>
               /keepinventory<br>
               /dim 〈overworld / nether〉<br>
-              /spawn 〈モブ名〉 〈数〉
+              /spawn 〈モブ名〉 〈数〉<br>
+              /gamemode 〈peaceful / easy / normal / hard〉
             </div>
             <div class="cmdInputRow">
               <input id="cmdInput" type="text" autocomplete="off" placeholder="/give 丸石 32" />
@@ -403,8 +422,31 @@
       </div>
       <div class="section">
         <h3>新しいワールド</h3>
-        <div class="small">空きがあるときだけ作れる。</div>
+        <div class="small">難易度を選んで新規作成する。</div>
         <button class="saveBtn" id="createWorldBtn">新しいワールドを作る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="difficultyOverlay" aria-hidden="true">
+  <div id="difficultyPanel">
+    <div class="panelHeader">
+      <strong>難易度を選ぶ</strong>
+      <button class="panelClose" id="closeDifficultyBtn">閉じる</button>
+    </div>
+    <div id="difficultyContent">
+      <div class="section">
+        <div id="difficultyText">新しいワールドの難易度を選んでね。</div>
+        <div class="diffPanel">
+          <div class="diffGrid">
+            <button class="diffBigBtn" data-d="peaceful"><strong>ピースフル</strong><span>敵出現なし。自然回復高速。</span></button>
+            <button class="diffBigBtn" data-d="easy"><strong>イージー</strong><span>敵少なめ。自然回復早め。</span></button>
+            <button class="diffBigBtn" data-d="normal"><strong>ノーマル</strong><span>今と同じ。</span></button>
+            <button class="diffBigBtn" data-d="hard"><strong>ハード</strong><span>敵多め。自然回復遅め。</span></button>
+            <button class="diffBigBtn" data-d="hardcore"><strong>ハードコア</strong><span>ハード相当。死んだらワールドが開けない。コマンド不可。</span></button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -425,9 +467,16 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const SAVE_KEY = 'oneDmc_saves_v13';
-  const GLOBAL_KEY = 'oneDmc_global_v13';
+  const SAVE_KEY = 'oneDmc_saves_v14';
+  const GLOBAL_KEY = 'oneDmc_global_v14';
   const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
+  const DIFFICULTIES = {
+    peaceful:{ label:'ピースフル', spawnChance:0, regenChance:1, regenAmount:0.5, nightSpawnFactor:0, name:'peaceful' },
+    easy:{ label:'イージー', spawnChance:1/32, regenChance:0.5, regenAmount:0.5, nightSpawnFactor:0.5, name:'easy' },
+    normal:{ label:'ノーマル', spawnChance:1/16, regenChance:0.25, regenAmount:0.5, nightSpawnFactor:1, name:'normal' },
+    hard:{ label:'ハード', spawnChance:1/8, regenChance:1/10, regenAmount:0.5, nightSpawnFactor:1.6, name:'hard' },
+    hardcore:{ label:'ハードコア', spawnChance:1/8, regenChance:1/10, regenAmount:0.5, nightSpawnFactor:1.6, name:'hardcore' }
+  };
   const PASSABLE = new Set(['empty','water','lava','fire','nether_portal']);
 
   const appEl = $('app');
@@ -479,6 +528,10 @@
   const createWorldBtn = $('createWorldBtn');
   const worldImageInput = $('worldImageInput');
 
+  const difficultyOverlay = $('difficultyOverlay');
+  const difficultyText = $('difficultyText');
+  const closeDifficultyBtn = $('closeDifficultyBtn');
+
   function loadJSON(key,fallback){
     try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
     catch{ return fallback; }
@@ -487,6 +540,12 @@
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
   function deep(obj){ return JSON.parse(JSON.stringify(obj)); }
   function normText(s){ return String(s ?? '').replace(/\u3000/g,' ').trim(); }
+  function compactText(s){
+    return normText(s).toLowerCase().replace(/[\s_\-./、・]/g,'').replace(/[()（）【】\[\]{}]/g,'');
+  }
+  function displayName(id){ return id ? (BLOCKS[id]?.name || id) : 'なし'; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 
   const globalState = Object.assign({ favoriteCmds:[] }, loadJSON(GLOBAL_KEY, {}));
   if(!Array.isArray(globalState.favoriteCmds)) globalState.favoriteCmds = [];
@@ -545,36 +604,44 @@
     'obsidian','netherrack','soul_sand','ancient_debris','bucket','water_bucket','lava_bucket','flint_and_steel'
   ]);
 
-  const TEXTURE_DIRS = ['textures/', './textures/', '../textures/'];
-  const TEXTURE_EXTS = ['png', 'webp', 'jpg', 'jpeg'];
+  const EMBEDDED_TEXTURES = window.ONE_D_MINECRAFT_TEXTURES || {};
+  const TEXTURE_DIRS = ['textures/','./textures/','../textures/','/textures/'];
+  const TEXTURE_EXTS = ['png','webp','jpg','jpeg'];
   const TEXTURE_MAP = Object.create(null);
   const TEXTURE_STATE = Object.create(null);
 
   function textureCandidatesFor(id){
     const names = [...new Set([id, BLOCKS[id]?.name].filter(Boolean))];
     const out = [];
-    for (const dir of TEXTURE_DIRS){
-      for (const name of names){
-        for (const ext of TEXTURE_EXTS){
+    if(EMBEDDED_TEXTURES[id]) out.push(EMBEDDED_TEXTURES[id]);
+    if(BLOCKS[id]?.name && EMBEDDED_TEXTURES[BLOCKS[id].name]) out.push(EMBEDDED_TEXTURES[BLOCKS[id].name]);
+    for(const dir of TEXTURE_DIRS){
+      for(const name of names){
+        for(const ext of TEXTURE_EXTS){
           out.push(new URL(encodeURI(`${dir}${name}.${ext}`), document.baseURI).href);
         }
       }
     }
     return out;
   }
-
   function requestTexture(id){
-    if (!id || id === 'empty') return;
-    if (TEXTURE_STATE[id] === 'loading' || TEXTURE_STATE[id] === 'loaded') return;
+    if(!id || id === 'empty') return;
+    if(TEXTURE_STATE[id] === 'loading' || TEXTURE_STATE[id] === 'loaded' || TEXTURE_STATE[id] === 'missing') return;
     TEXTURE_STATE[id] = 'loading';
 
     const candidates = textureCandidatesFor(id);
     let i = 0;
-
     const tryNext = () => {
-      if (i >= candidates.length){
+      if(i >= candidates.length){
         TEXTURE_STATE[id] = 'missing';
         TEXTURE_MAP[id] = null;
+        return;
+      }
+      const src = candidates[i];
+      if(/^data:/.test(src)){
+        TEXTURE_STATE[id] = 'loaded';
+        TEXTURE_MAP[id] = src;
+        render();
         return;
       }
       const img = new Image();
@@ -583,20 +650,14 @@
         TEXTURE_MAP[id] = img.src;
         render();
       };
-      img.onerror = () => {
-        i++;
-        tryNext();
-      };
-      img.src = candidates[i] + `?v=${Date.now()}`;
+      img.onerror = () => { i++; tryNext(); };
+      img.src = src + `?v=${Date.now()}`;
     };
-
     tryNext();
   }
-
   function preloadTextures(){
-    for (const id of Object.keys(BLOCKS)){
-      if (id === 'empty') continue;
-      requestTexture(id);
+    for(const id of Object.keys(BLOCKS)){
+      if(id !== 'empty') requestTexture(id);
     }
   }
 
@@ -659,10 +720,12 @@
 
   const saves = loadJSON(SAVE_KEY, []);
   let activeSaveId = null;
+  let pendingDifficulty = 'normal';
   const worlds = { [DIM.OVERWORLD]: makeWorld(DIM.OVERWORLD), [DIM.NETHER]: makeWorld(DIM.NETHER) };
 
   const state = {
     dim:DIM.OVERWORLD,
+    difficulty:'normal',
     pos:{
       [DIM.OVERWORLD]:{x:0,y:0},
       [DIM.NETHER]:{x:0,y:0}
@@ -694,9 +757,6 @@
     return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
   }
   function setMsg(t){ msgText.textContent = t; }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-  function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
-  function displayName(id){ return id ? (BLOCKS[id]?.name || id) : 'なし'; }
 
   function hashMany(seed, ...vals){
     let h = seed >>> 0;
@@ -807,14 +867,12 @@
     if(!cache.has(key)) cache.set(key, new LineGen(dim, key));
     return cache.get(key);
   }
-
   function naturalBlock(dim,x,y){
     const major = dim === DIM.OVERWORLD ? x : y;
-    const minor = dim === DIM.OVERWORLD ? y : x;
     if(major === 0) return 'empty';
+    const minor = dim === DIM.OVERWORLD ? y : x;
     return getLineGen(dim, minor).blockAt(major);
   }
-
   function getBlockAt(dim,x,y){
     const w = worlds[dim];
     const k = `${x},${y}`;
@@ -841,6 +899,7 @@
       w.tnt.delete(k);
     }
   }
+
   function buildSpawnArea(){
     for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
       for(let i=-3;i<=3;i++) setBlockAt(dim,i,0,'empty');
@@ -895,44 +954,98 @@
     };
     return map[t] || map[token] || token;
   }
-  function itemAlias(token){
-    const t = normText(token);
-    const map = {
-      空気:'air_item', air:'air_item', air_item:'air_item',
-      石炭鉱石:'coal_ore', 鉄鉱石:'iron_ore', 金鉱石:'gold_ore', ダイヤ鉱石:'diamond_ore',
-      石炭:'coal',
-      砂利:'gravel',
-      鉄の原石:'raw_iron', 金の原石:'raw_gold', 鉄インゴット:'iron_ingot', 金インゴット:'gold_ingot',
-      木の剣:'wooden_sword', 石の剣:'stone_sword', 鉄の剣:'iron_sword', 金の剣:'gold_sword', ダイヤの剣:'diamond_sword',
-      木の斧:'wooden_axe', 石の斧:'stone_axe', 鉄の斧:'iron_axe', 金の斧:'gold_axe', ダイヤの斧:'diamond_axe',
-      木のシャベル:'wooden_shovel', 石のシャベル:'stone_shovel', 鉄のシャベル:'iron_shovel', 金のシャベル:'gold_shovel', ダイヤのシャベル:'diamond_shovel',
-      木のツルハシ:'wooden_pickaxe', 石のツルハシ:'stone_pickaxe', 鉄のツルハシ:'iron_pickaxe', 金のツルハシ:'gold_pickaxe', ダイヤのツルハシ:'diamond_pickaxe',
-      woodalltools:'wood_alltools', stonealltools:'stone_alltools', ironalltools:'iron_alltools', goldalltools:'gold_alltools', diamondalltools:'diamond_alltools',
-      wood_alltools:'wood_alltools', stone_alltools:'stone_alltools', iron_alltools:'iron_alltools', gold_alltools:'gold_alltools', diamond_alltools:'diamond_alltools',
-      'wood all tools':'wood_alltools', 'stone all tools':'stone_alltools', 'iron all tools':'iron_alltools', 'gold all tools':'gold_alltools', 'diamond all tools':'diamond_alltools',
-      wood:'wood', plank:'plank', stick:'stick', sand:'sand', gravel:'gravel', flint:'flint', gunpowder:'gunpowder',
-      cobblestone:'cobblestone', coal:'coal', diamond:'diamond', dirt:'dirt', grass:'grass', leaf:'leaf',
-      crafting_table:'crafting_table', furnace:'furnace', torch:'torch', obsidian:'obsidian', netherrack:'netherrack', soul_sand:'soul_sand', ancient_debris:'ancient_debris',
-      water:'water', lava:'lava', bucket:'bucket', water_bucket:'water_bucket', lava_bucket:'lava_bucket', flint_and_steel:'flint_and_steel', tnt:'tnt', nether_portal:'nether_portal',
-      stone:'stone', coal_ore:'coal_ore', iron_ore:'iron_ore', gold_ore:'gold_ore', diamond_ore:'diamond_ore',
-      'coal ore':'coal_ore', 'iron ore':'iron_ore', 'gold ore':'gold_ore', 'diamond ore':'diamond_ore'
-    };
-    const key = t.toLowerCase();
-    const compact = key.replace(/\s+/g,' ');
-    return map[t] || map[key] || map[compact] || token;
+
+  function buildResolveMaps(){
+    const exact = new Map();
+    const add = (key,id) => { if(key) exact.set(compactText(key), id); };
+    for(const id of Object.keys(BLOCKS)){
+      add(id, id);
+      add(BLOCKS[id].name, id);
+    }
+    add('air', 'air_item');
+    add('空気', 'air_item');
+    add('無', 'air_item');
+    add('stone pickaxe', 'stone_pickaxe');
+    add('iron pickaxe', 'iron_pickaxe');
+    add('gold pickaxe', 'gold_pickaxe');
+    add('diamond pickaxe', 'diamond_pickaxe');
+    add('wood pickaxe', 'wooden_pickaxe');
+    add('wooden pickaxe', 'wooden_pickaxe');
+
+    add('stone axe', 'stone_axe');
+    add('iron axe', 'iron_axe');
+    add('gold axe', 'gold_axe');
+    add('diamond axe', 'diamond_axe');
+    add('wood axe', 'wooden_axe');
+    add('wooden axe', 'wooden_axe');
+
+    add('stone shovel', 'stone_shovel');
+    add('iron shovel', 'iron_shovel');
+    add('gold shovel', 'gold_shovel');
+    add('diamond shovel', 'diamond_shovel');
+    add('wood shovel', 'wooden_shovel');
+    add('wooden shovel', 'wooden_shovel');
+
+    add('stone sword', 'stone_sword');
+    add('iron sword', 'iron_sword');
+    add('gold sword', 'gold_sword');
+    add('diamond sword', 'diamond_sword');
+    add('wood sword', 'wooden_sword');
+    add('wooden sword', 'wooden_sword');
+
+    add('wood alltools', 'wood_alltools');
+    add('stone alltools', 'stone_alltools');
+    add('iron alltools', 'iron_alltools');
+    add('gold alltools', 'gold_alltools');
+    add('diamond alltools', 'diamond_alltools');
+    add('woodalltools', 'wood_alltools');
+    add('stonealltools', 'stone_alltools');
+    add('ironalltools', 'iron_alltools');
+    add('goldalltools', 'gold_alltools');
+    add('diamondalltools', 'diamond_alltools');
+    return exact;
   }
-  function parseGiveTarget(raw){
-    const token = normText(raw);
-    if(!token) return null;
-    if(token === '∀' || token.toUpperCase() === 'ALL') return { kind:'all' };
-    const compact = token.replace(/[\s_\-]/g,'').replace(/の/g,'').toLowerCase();
-    if(compact.endsWith('alltools')){
-      const prefix = compact.slice(0,-8);
+  const RESOLVE_MAP = buildResolveMaps();
+
+  function resolveItemId(token){
+    const raw = normText(token);
+    if(!raw) return null;
+    const c = compactText(raw);
+    if(c === '∀' || c === 'all') return { kind:'all' };
+    if(c.endsWith('alltools')){
+      const prefix = c.slice(0,-8);
       const gradeMap = { wood:'wood', wooden:'wood', stone:'stone', iron:'iron', gold:'gold', diamond:'diamond' };
       const grade = gradeMap[prefix];
       if(grade) return { kind:'item', id:`${grade}_alltools` };
     }
-    return { kind:'item', id:itemAlias(token) };
+    if(RESOLVE_MAP.has(c)) return { kind:'item', id:RESOLVE_MAP.get(c) };
+    for(const id of Object.keys(BLOCKS)){
+      if(compactText(id) === c || compactText(BLOCKS[id].name) === c) return { kind:'item', id };
+    }
+    return { kind:'item', id:tokenAliasFallback(raw) };
+  }
+  function tokenAliasFallback(raw){
+    const t = normText(raw);
+    const key = t.toLowerCase();
+    const map = {
+      石炭鉱石:'coal_ore',鉄鉱石:'iron_ore',金鉱石:'gold_ore',ダイヤ鉱石:'diamond_ore',
+      石炭:'coal',砂利:'gravel',鉄の原石:'raw_iron',金の原石:'raw_gold',鉄インゴット:'iron_ingot',金インゴット:'gold_ingot',
+      木の剣:'wooden_sword',石の剣:'stone_sword',鉄の剣:'iron_sword',金の剣:'gold_sword',ダイヤの剣:'diamond_sword',
+      木の斧:'wooden_axe',石の斧:'stone_axe',鉄の斧:'iron_axe',金の斧:'gold_axe',ダイヤの斧:'diamond_axe',
+      木のシャベル:'wooden_shovel',石のシャベル:'stone_shovel',鉄のシャベル:'iron_shovel',金のシャベル:'gold_shovel',ダイヤのシャベル:'diamond_shovel',
+      木のツルハシ:'wooden_pickaxe',石のツルハシ:'stone_pickaxe',鉄のツルハシ:'iron_pickaxe',金のツルハシ:'gold_pickaxe',ダイヤのツルハシ:'diamond_pickaxe',
+      wood:'wood',plank:'plank',stick:'stick',sand:'sand',gravel:'gravel',flint:'flint',gunpowder:'gunpowder',
+      cobblestone:'cobblestone',coal:'coal',diamond:'diamond',dirt:'dirt',grass:'grass',leaf:'leaf',
+      crafting_table:'crafting_table',furnace:'furnace',torch:'torch',obsidian:'obsidian',netherrack:'netherrack',soul_sand:'soul_sand',ancient_debris:'ancient_debris',
+      water:'water',lava:'lava',bucket:'bucket',water_bucket:'water_bucket',lava_bucket:'lava_bucket',flint_and_steel:'flint_and_steel',tnt:'tnt',nether_portal:'nether_portal',
+      stone:'stone',coal_ore:'coal_ore',iron_ore:'iron_ore',gold_ore:'gold_ore',diamond_ore:'diamond_ore',
+      wooden_pickaxe:'wooden_pickaxe',stone_pickaxe:'stone_pickaxe',iron_pickaxe:'iron_pickaxe',gold_pickaxe:'gold_pickaxe',diamond_pickaxe:'diamond_pickaxe',
+      wooden_axe:'wooden_axe',stone_axe:'stone_axe',iron_axe:'iron_axe',gold_axe:'gold_axe',diamond_axe:'diamond_axe',
+      wooden_shovel:'wooden_shovel',stone_shovel:'stone_shovel',iron_shovel:'iron_shovel',gold_shovel:'gold_shovel',diamond_shovel:'diamond_shovel',
+      wooden_sword:'wooden_sword',stone_sword:'stone_sword',iron_sword:'iron_sword',gold_sword:'gold_sword',diamond_sword:'diamond_sword',
+      wood_alltools:'wood_alltools',stone_alltools:'stone_alltools',iron_alltools:'iron_alltools',gold_alltools:'gold_alltools',diamond_alltools:'diamond_alltools'
+    };
+    return map[t] || map[key] || t;
   }
 
   function toolTypeOf(item){
@@ -995,8 +1108,6 @@
     removeItem(item,1);
     setMsg(`${displayName(item)} が壊れた。`);
   }
-  function canPlaceable(item){ return PLACEABLE.has(item); }
-  function canCraftInput(item){ return CRAFT_INPUTS.has(item); }
   function isShovelLike(item){ return toolTypeOf(item)==='shovel' || toolTypeOf(item)==='alltools'; }
   function isAxeLike(item){ return toolTypeOf(item)==='axe' || toolTypeOf(item)==='alltools'; }
   function isPickLike(item){ return toolTypeOf(item)==='pickaxe' || toolTypeOf(item)==='alltools'; }
@@ -1009,11 +1120,9 @@
     const rules = {
       dirt:{tool:'shovel',drop:'dirt'}, grass:{tool:'shovel',drop:'dirt'}, sand:{tool:'shovel',drop:'sand'}, soul_sand:{tool:'shovel',drop:'soul_sand'},
       wood:{tool:'axe',drop:'wood'}, leaf:{tool:'axe',drop:'leaf'}, plank:{tool:'axe',drop:'plank'},
-
       stone:{tool:'pickaxe',drop:'cobblestone'}, cobblestone:{tool:'pickaxe',drop:'cobblestone'},
       coal_ore:{tool:'pickaxe',drop:'coal',minTier:1}, iron_ore:{tool:'pickaxe',drop:'raw_iron',minTier:2}, gold_ore:{tool:'pickaxe',drop:'raw_gold',minTier:2}, diamond_ore:{tool:'pickaxe',drop:'diamond',minTier:3},
       obsidian:{tool:'pickaxe',drop:'obsidian',minTier:5}, ancient_debris:{tool:'pickaxe',drop:'ancient_debris',minTier:2},
-
       netherrack:{tool:'any',drop:'netherrack'}, crafting_table:{tool:'any',drop:'crafting_table'}, furnace:{tool:'any',drop:'furnace'}, torch:{tool:'any',drop:'torch'},
       raw_iron:{tool:'any',drop:'raw_iron'}, raw_gold:{tool:'any',drop:'raw_gold'}, iron_ingot:{tool:'any',drop:'iron_ingot'}, gold_ingot:{tool:'any',drop:'gold_ingot'}, diamond:{tool:'any',drop:'diamond'},
       flint:{tool:'any',drop:'flint'}, gunpowder:{tool:'any',drop:'gunpowder'}, bucket:{tool:'any',drop:'bucket'}, water_bucket:{tool:'any',drop:'water_bucket'}, lava_bucket:{tool:'any',drop:'lava_bucket'}, flint_and_steel:{tool:'any',drop:'flint_and_steel'}, tnt:{tool:'any',drop:'tnt'},
@@ -1064,6 +1173,12 @@
     const ss = String(sec%60).padStart(2,'0');
     return `${night ? '夜' : '昼'} ${mm}:${ss}`;
   }
+  function difficultyLabel(){ return DIFFICULTIES[state.difficulty]?.label || state.difficulty; }
+  function hardcore(){ return state.difficulty === 'hardcore'; }
+  function currentSpawnChance(){ return DIFFICULTIES[state.difficulty]?.spawnChance ?? 1/16; }
+  function currentRegenChance(){ return DIFFICULTIES[state.difficulty]?.regenChance ?? 0.25; }
+  function currentRegenAmount(){ return DIFFICULTIES[state.difficulty]?.regenAmount ?? 0.5; }
+  function currentNightFactor(){ return DIFFICULTIES[state.difficulty]?.nightSpawnFactor ?? 1; }
 
   function enemyAtTarget(){
     const t = currentTarget();
@@ -1084,6 +1199,7 @@
     return true;
   }
   function spawnNightMobNearPlayer(){
+    if(state.difficulty === 'peaceful') return false;
     const w = world();
     const p = currentPos();
     const type = Math.random()<0.5 ? 'zombie' : 'creeper';
@@ -1121,6 +1237,11 @@
     return spawned;
   }
 
+  function currentSaveSlot(){
+    if(!activeSaveId) return null;
+    return saves.find(s => s.id === activeSaveId) || null;
+  }
+
   function respawnPlayer(){
     state.pos[DIM.OVERWORLD] = {x:0,y:0};
     state.dim = DIM.OVERWORLD;
@@ -1137,13 +1258,14 @@
     state.downedAcc = 0;
     setMsg(reason);
   }
+
   function updatePlayerHealth(dt){
     if(state.hp > 0){
       state.regenAcc += dt;
       while(state.regenAcc >= 1){
         state.regenAcc -= 1;
-        if(Math.random() < 0.25 && state.hp < state.maxHp){
-          state.hp = Math.min(state.maxHp, state.hp + 0.5);
+        if(Math.random() < currentRegenChance() && state.hp < state.maxHp){
+          state.hp = Math.min(state.maxHp, state.hp + currentRegenAmount());
         }
       }
     }else{
@@ -1222,44 +1344,34 @@
   function updateLiquidFlow(){
     for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
       const w = worlds[dim];
-      const entries = [...w.mods.entries()];
-      const fluids = new Map();
-      for(const [k,b] of entries){
-        if(b === 'water' || b === 'lava') fluids.set(k,b);
-      }
       const candidate = new Set();
-
-      const add = (x,y) => candidate.add(`${x},${y}`);
-
-      for(const [k,b] of fluids){
-        const [x,y] = k.split(',').map(Number);
-        add(x+1,y); add(x-1,y); add(x,y+1); add(x,y-1);
-        add(x,y);
+      for(const [k,b] of w.mods.entries()){
+        if(b === 'water' || b === 'lava'){
+          const [x,y] = k.split(',').map(Number);
+          candidate.add(`${x},${y}`);
+          candidate.add(`${x+1},${y}`);
+          candidate.add(`${x-1},${y}`);
+          candidate.add(`${x},${y+1}`);
+          candidate.add(`${x},${y-1}`);
+        }
       }
-
       const toFill = [];
       for(const key of candidate){
         const [x,y] = key.split(',').map(Number);
         if(getBlockAt(dim,x,y) !== 'empty') continue;
-
         const left = getBlockAt(dim,x-1,y);
         const right = getBlockAt(dim,x+1,y);
         const up = getBlockAt(dim,x,y-1);
         const down = getBlockAt(dim,x,y+1);
-
         if(left === right && (left === 'water' || left === 'lava')){
           toFill.push([x,y,left]);
           continue;
         }
         if(up === down && (up === 'water' || up === 'lava')){
           toFill.push([x,y,up]);
-          continue;
         }
       }
-
-      for(const [x,y,b] of toFill){
-        setBlockAt(dim,x,y,b);
-      }
+      for(const [x,y,b] of toFill) setBlockAt(dim,x,y,b);
     }
   }
 
@@ -1442,7 +1554,7 @@
       const counts = {}; let filled = 0;
       for(const item of grid){ if(!item) continue; counts[item] = (counts[item] || 0) + 1; filled++; }
       const needKeys = Object.keys(recipe.need);
-      const needCount = needKeys.reduce((s,k)=>s + recipe.need[k], 0);
+      const needCount = needKeys.reduce((s,k) => s + recipe.need[k], 0);
       if(filled !== needCount) return false;
       for(const k of needKeys){ if((counts[k] || 0) !== recipe.need[k]) return false; }
       return true;
@@ -1508,7 +1620,7 @@
             return;
           }
           if(!state.heldItem){ setMsg('先に所持品を選んでね。'); return; }
-          if(!canCraftInput(state.heldItem)){ setMsg('それはクラフト材料にできない。'); return; }
+          if(!CRAFT_INPUTS.has(state.heldItem)){ setMsg('それはクラフト材料にできない。'); return; }
           if(count(state.heldItem) <= 0){ setMsg('そのアイテムが足りない。'); return; }
           const placed = state.heldItem;
           removeItem(placed,1);
@@ -1563,9 +1675,12 @@
   }
 
   function refreshCommandVisibility(){
-    cmdLockPrompt.style.display = state.cmdUnlocked ? 'none' : 'block';
-    cmdUnlockedBox.style.display = state.cmdUnlocked ? 'block' : 'none';
-    cmdInput.disabled = !state.cmdUnlocked;
+    const canUse = state.cmdUnlocked && !hardcore();
+    cmdLockPrompt.style.display = canUse ? 'none' : 'block';
+    cmdUnlockedBox.style.display = canUse ? 'block' : 'none';
+    cmdInput.disabled = !canUse;
+    unlockCmdBtn.disabled = hardcore();
+    unlockCmdBtn.textContent = hardcore() ? 'ハードコアでは使えない' : 'コマンドのロックを解除';
     refreshCmdFavUI();
   }
   function refreshAllMenus(){
@@ -1584,6 +1699,15 @@
   function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
   function currentBlockPassable(block){ return PASSABLE.has(block); }
 
+  function saveActiveSlotSnapshot(){
+    const slot = currentSaveSlot();
+    if(!slot) return;
+    slot.data = snapshotGame();
+    slot.difficulty = state.difficulty;
+    slot.updatedAt = Date.now();
+    saveSaveSlots();
+  }
+
   function killPlayer(){
     const w = world();
     const p = currentPos();
@@ -1601,6 +1725,19 @@
       for(const item of Object.keys(corpseItems)) delete state.inventory[item];
       w.corpses.set(`${p.x},${p.y}`, { x:p.x, y:p.y, items:corpseItems, age:0, claimAcc:0 });
     }
+
+    if(hardcore()){
+      const slot = currentSaveSlot();
+      if(slot){
+        slot.locked = true;
+        slot.data = snapshotGame();
+        slot.updatedAt = Date.now();
+        saveSaveSlots();
+      }
+      state.cmdUnlocked = false;
+      refreshCommandVisibility();
+    }
+
     state.pos[DIM.OVERWORLD] = {x:0,y:0};
     state.dim = DIM.OVERWORLD;
     state.facing = 1;
@@ -1650,7 +1787,7 @@
   function runCommand(raw){
     const text = normText(raw);
     if(!text) return;
-    if(!state.cmdUnlocked){ setMsg('コマンドはロック中。'); return; }
+    if(!state.cmdUnlocked || hardcore()){ setMsg('コマンドは使えない。'); return; }
     const parts = text.split(/\s+/);
     const cmd = parts[0].replace(/^\/+/, '').toLowerCase();
 
@@ -1681,6 +1818,19 @@
       else setMsg('使い方: /dim 〈overworld / nether〉');
       return;
     }
+    if(cmd === 'gamemode'){
+      const d = (parts[1] || '').toLowerCase();
+      if(!['peaceful','easy','normal','hard'].includes(d)){
+        setMsg('使い方: /gamemode 〈peaceful / easy / normal / hard〉');
+        return;
+      }
+      state.difficulty = d;
+      const slot = currentSaveSlot();
+      if(slot){ slot.difficulty = d; slot.updatedAt = Date.now(); saveSaveSlots(); }
+      setMsg(`難易度を ${DIFFICULTIES[d].label} にした。`);
+      refreshCommandVisibility();
+      return;
+    }
 
     if(cmd === 'give'){
       const body = text.replace(/^\/+give\s+/i, '').trim();
@@ -1696,7 +1846,7 @@
           itemToken = toks.slice(0,-1).join(' ');
         }
       }
-      const target = parseGiveTarget(itemToken);
+      const target = resolveItemId(itemToken);
       if(!target){ setMsg('そのアイテムは使えない。'); return; }
       const inf = qtyToken === '∞' || qtyToken.toUpperCase() === 'INFINITY';
       const n = inf ? Infinity : Math.max(1, parseInt(qtyToken,10) || 1);
@@ -1720,7 +1870,7 @@
       if(!type){ setMsg('使い方: /spawn 〈モブ名〉 〈数〉'); return; }
       const spawned = spawnCommandMob(type, n);
       refreshAllMenus(); render();
-      setMsg(`${displayName(type === 'zombie' ? 'zombie' : 'creeper')} を ${spawned} 体召喚した。`);
+      setMsg(`${type === 'zombie' ? 'ゾンビ' : 'クリーパー'} を ${spawned} 体召喚した。`);
       return;
     }
 
@@ -1756,11 +1906,12 @@
   }
 
   function updateNight(dt){
-    if(!isNight()) return;
+    if(!isNight() || state.difficulty === 'peaceful') return;
     state.nightSpawnAcc += dt;
+    const factor = currentNightFactor();
     while(state.nightSpawnAcc >= 1){
       state.nightSpawnAcc -= 1;
-      if(Math.random() < 1/16) spawnNightMobNearPlayer();
+      if(Math.random() < currentSpawnChance() * factor) spawnNightMobNearPlayer();
     }
   }
   function updatePortalTravel(dt){
@@ -1799,9 +1950,7 @@
 
   function mineSpecialCobbleLike(block, tool, dim, x, y){
     if(block === 'cobblestone' && isShovelLike(tool)){
-      if(Math.random() > 1/16) {
-        return { ok:false, mined:false, msg:'空振りした。' };
-      }
+      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
       setBlockAt(dim, x, y, 'empty');
       if(Math.random() < 1/16){
         addItem('gravel', 1);
@@ -1809,11 +1958,8 @@
       }
       return { ok:true, mined:true, drop:null, msg:'丸石を砕いた。砂利は出なかった。' };
     }
-
     if(block === 'gravel' && isShovelLike(tool)){
-      if(Math.random() > 1/16) {
-        return { ok:false, mined:false, msg:'空振りした。' };
-      }
+      if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
       setBlockAt(dim, x, y, 'empty');
       if(Math.random() < 1/16){
         addItem('flint', 1);
@@ -1821,7 +1967,6 @@
       }
       return { ok:true, mined:true, drop:null, msg:'砂利を砕いた。火打石は出なかった。' };
     }
-
     return null;
   }
 
@@ -1849,14 +1994,12 @@
       if(!isPickLike(item)) return 0;
       return baseMineRate(mat);
     }
-
     if(block === 'cobblestone'){
       if(type === 'none') return 1/16;
       if(isShovelLike(item)) return 1/16;
       if(!isPickLike(item)) return 0;
       return baseMineRate(mat);
     }
-
     if(block === 'gravel'){
       if(type === 'none') return 1/16;
       if(!isShovelLike(item)) return 0;
@@ -1879,7 +2022,6 @@
     if(inWater) chance *= 0.5;
     return chance;
   }
-
   function dropForBlock(block){
     const rule = mineRule(block);
     return rule ? (rule.drop || block) : block;
@@ -2179,7 +2321,7 @@
 
     if(!state.heldItem){ setMsg('手持ちがない。'); return; }
 
-    if(canPlaceable(state.heldItem)){
+    if(PLACEABLE.has(state.heldItem)){
       if(block === 'empty' || block === 'water' || block === 'lava' || block === 'fire'){
         const placed = state.heldItem;
         setBlockAt(state.dim,t.x,t.y,placed);
@@ -2398,7 +2540,7 @@
       `${state.dim === DIM.OVERWORLD ? 'Overworld' : 'Nether'} ${activeAxis()} = ${activeCoord()}<br>` +
       `向き <span class="dirStrong">${state.facing === -1 ? '←' : '→'}</span> / 手持ち ${state.heldItem ? stackText(state.heldItem) : 'なし'}<br>` +
       `体力 ${fmtHalf(state.hp)}/${state.maxHp}${breathLine}<br>` +
-      `${timeText()}`;
+      `${timeText()} / ${difficultyLabel()}${hardcore() ? ' / Hardcore' : ''}`;
 
     updateMineButtonLabel();
     placeBtn.textContent = '置く';
@@ -2426,6 +2568,7 @@
     return {
       version:1,
       dim:state.dim,
+      difficulty:state.difficulty,
       pos:deep(state.pos),
       facing:state.facing,
       hp:state.hp, maxHp:state.maxHp,
@@ -2444,6 +2587,7 @@
   function applySnapshot(data){
     if(!data) return;
     state.dim = data.dim || DIM.OVERWORLD;
+    state.difficulty = data.difficulty || 'normal';
     state.pos = data.pos || state.pos;
     state.facing = data.facing ?? 1;
     state.hp = data.hp ?? 10; state.maxHp = data.maxHp ?? 10;
@@ -2463,6 +2607,7 @@
     clearLineCaches();
     updateTheme();
     normalizeHeld();
+    refreshCommandVisibility();
   }
 
   function saveSaveSlots(){ saveJSON(SAVE_KEY, saves); }
@@ -2507,6 +2652,18 @@
       dimBadge.textContent = (slot.data?.dim === DIM.NETHER) ? 'Nether' : 'Overworld';
       row.appendChild(dimBadge);
 
+      const diffBadge = document.createElement('span');
+      diffBadge.className = 'badge';
+      diffBadge.textContent = (slot.difficulty && DIFFICULTIES[slot.difficulty]) ? DIFFICULTIES[slot.difficulty].label : 'ノーマル';
+      row.appendChild(diffBadge);
+
+      if(slot.locked){
+        const lb = document.createElement('span');
+        lb.className = 'badge lockBadge';
+        lb.textContent = 'LOCKED';
+        row.appendChild(lb);
+      }
+
       const name = document.createElement('div');
       name.className = 'worldName';
       name.textContent = slot.name || '無題のワールド';
@@ -2521,7 +2678,8 @@
 
       const open = document.createElement('button');
       open.className = 'loadBtn';
-      open.textContent = '開く';
+      open.textContent = slot.locked ? '開けない' : '開く';
+      open.disabled = !!slot.locked;
       open.addEventListener('click', () => loadWorldById(slot.id));
 
       const rename = document.createElement('button');
@@ -2563,7 +2721,7 @@
             renderWorldList();
             if(!saves.length){
               closeWorldListPanel();
-              startFreshWorld();
+              startFreshWorld('normal');
             }
           },
           null,
@@ -2589,6 +2747,10 @@
   function loadWorldById(id){
     const slot = saves.find(s => s.id === id);
     if(!slot) return;
+    if(slot.locked){
+      setMsg('ハードコアのワールドは開けない。');
+      return;
+    }
     applySnapshot(slot.data);
     activeSaveId = id;
     closeWorldListPanel();
@@ -2604,25 +2766,40 @@
     copy.name = `${copy.name || '無題のワールド'} (copy)`;
     copy.updatedAt = Date.now();
     copy.data = deep(slot.data);
+    copy.locked = false;
     saves.push(copy);
     saveSaveSlots();
     renderWorldList();
   }
-  function startFreshWorld(){
+  function startFreshWorld(difficulty='normal'){
     worlds[DIM.OVERWORLD] = makeWorld(DIM.OVERWORLD);
     worlds[DIM.NETHER] = makeWorld(DIM.NETHER);
     clearLineCaches();
     state.dim = DIM.OVERWORLD;
+    state.difficulty = difficulty;
     state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
     state.facing = 1;
     state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
     state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
     state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
     state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
-    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0; state.keepInventory = false; state.cmdUnlocked = false;
+    state.portalAcc = 0; state.portalRecentTravel = false; state.portalShake = 0;
+    state.keepInventory = false;
+    state.cmdUnlocked = false;
     state.craftGridSize = 2; state.craftGrid = Array(4).fill(null);
     buildSpawnArea(); ensureSpawnResources(); normalizeHeld(); updateTheme(); refreshAllMenus(); render();
-    setMsg('新しい世界を作った。');
+    setMsg(`新しい世界を作った。${DIFFICULTIES[difficulty]?.label || difficulty}`);
+  }
+
+  function openDifficultyPanel(){
+    pendingDifficulty = 'normal';
+    difficultyText.textContent = '新しいワールドの難易度を選んでね。';
+    difficultyOverlay.classList.add('open');
+    difficultyOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeDifficultyPanel(){
+    difficultyOverlay.classList.remove('open');
+    difficultyOverlay.setAttribute('aria-hidden','true');
   }
 
   function saveCurrentWorld(){
@@ -2631,10 +2808,10 @@
     const name = existing?.name || `ワールド ${saves.length + 1}`;
     if(activeSaveId){
       const idx = saves.findIndex(s => s.id === activeSaveId);
-      if(idx >= 0) saves[idx] = { ...saves[idx], name, data:snap, updatedAt:Date.now() };
+      if(idx >= 0) saves[idx] = { ...saves[idx], name, difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked: !!saves[idx].locked };
     }else{
       if(saves.length >= 10){ setMsg('セーブは10個まで。'); return false; }
-      const slot = { id:uid(), name, image:'', data:snap, updatedAt:Date.now() };
+      const slot = { id:uid(), name, image:'', difficulty:state.difficulty, data:snap, updatedAt:Date.now(), locked:false };
       saves.push(slot);
       activeSaveId = slot.id;
     }
@@ -2683,9 +2860,12 @@
   }
 
   function refreshCommandVisibility(){
-    cmdLockPrompt.style.display = state.cmdUnlocked ? 'none' : 'block';
-    cmdUnlockedBox.style.display = state.cmdUnlocked ? 'block' : 'none';
-    cmdInput.disabled = !state.cmdUnlocked;
+    const canUse = state.cmdUnlocked && !hardcore();
+    cmdLockPrompt.style.display = canUse ? 'none' : 'block';
+    cmdUnlockedBox.style.display = canUse ? 'block' : 'none';
+    cmdInput.disabled = !canUse;
+    unlockCmdBtn.disabled = hardcore();
+    unlockCmdBtn.textContent = hardcore() ? 'ハードコアでは使えない' : 'コマンドのロックを解除';
     refreshCmdFavUI();
   }
   function refreshAllMenus(){
@@ -2699,14 +2879,33 @@
   }
   function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
 
+  function updateLiquidPlacementOnLoad(){} 
+
+  function updateWorldAfterLoad(){
+    clearLineCaches();
+    updateTheme();
+    normalizeHeld();
+    refreshCommandVisibility();
+  }
+
   function init(){
     buildSpawnArea();
     ensureSpawnResources();
     preloadTextures();
     updateLayout();
     updateTheme();
-    if(saves.length > 0){ startFreshWorld(); openWorldListPanel(); }
-    else{ startFreshWorld(); }
+    if(saves.length > 0){
+      const first = saves.find(s => !s.locked);
+      if(first){
+        applySnapshot(first.data);
+        activeSaveId = first.id;
+      }else{
+        startFreshWorld('normal');
+      }
+      openWorldListPanel();
+    }else{
+      startFreshWorld('normal');
+    }
     refreshAllMenus();
     refreshCommandVisibility();
     updateMineButtonLabel();
@@ -2774,6 +2973,10 @@
   });
 
   unlockCmdBtn.addEventListener('click', () => {
+    if(hardcore()){
+      setMsg('ハードコアではコマンドを使えない。');
+      return;
+    }
     openConfirm(
       'コマンドのロックを解除しますか？これは戻すことはできません',
       () => {
@@ -2840,14 +3043,25 @@
   worldOverlay.addEventListener('click', e => { if(e.target === worldOverlay) closeWorldListPanel(); });
   createWorldBtn.addEventListener('click', () => {
     if(saves.length >= 10){ setMsg('セーブは10個まで。'); return; }
-    closeWorldListPanel();
-    startFreshWorld();
+    openDifficultyPanel();
   });
   saveWorldBtn.addEventListener('click', saveCurrentWorld);
   worldImageInput.addEventListener('change', () => {
     const file = worldImageInput.files && worldImageInput.files[0];
     if(file) saveWorldToSlotImageFromInput(file);
     worldImageInput.value = '';
+  });
+
+  $('closeDifficultyBtn').addEventListener('click', closeDifficultyPanel);
+  difficultyOverlay.addEventListener('click', e => { if(e.target === difficultyOverlay) closeDifficultyPanel(); });
+  document.querySelectorAll('.diffBigBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingDifficulty = btn.dataset.d;
+      closeDifficultyPanel();
+      closeWorldListPanel();
+      startFreshWorld(pendingDifficulty);
+      setMsg(`${DIFFICULTIES[pendingDifficulty].label} で新しい世界を作った。`);
+    });
   });
 
   window.addEventListener('keydown', (e) => {
@@ -2860,8 +3074,8 @@
     else if(k === 'arrowright' || k === 'd'){ e.preventDefault(); move(1); }
     else if(k === ' ' || k === 'spacebar'){ e.preventDefault(); mine(); }
     else if(k === 'i'){ e.preventDefault(); invOverlay.classList.contains('open') ? closeInv() : openInv(); }
-    else if(k === 'r'){ e.preventDefault(); startFreshWorld(); }
-    else if(k === 'escape'){ closeInv(); closeConfirm(); closeWorldListPanel(); }
+    else if(k === 'r'){ e.preventDefault(); startFreshWorld('normal'); }
+    else if(k === 'escape'){ closeInv(); closeConfirm(); closeWorldListPanel(); closeDifficultyPanel(); }
   }, { passive:false });
 
   window.addEventListener('resize', () => { updateLayout(); render(); });
