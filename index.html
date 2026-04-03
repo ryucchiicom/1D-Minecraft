@@ -62,7 +62,10 @@
     width:var(--cell-size);height:var(--cell-size);border-radius:14px;
     display:flex;align-items:center;justify-content:center;position:relative;
     font-size:clamp(18px,5vw,28px);font-weight:800;user-select:none;flex:0 0 auto;
-    border:1px solid rgba(255,255,255,.08);background:#1a1f2a;overflow:hidden
+    border:1px solid rgba(255,255,255,.08);background:#1a1f2a;overflow:hidden;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
   }
   .cell.empty{background:linear-gradient(180deg,#171b24,#121620);color:#8d96b3}
   .cell.dirt{background:linear-gradient(180deg,#8a5a3d,#734a31)}
@@ -112,15 +115,6 @@
   .cell.grave{
     outline:3px solid #ff7d7d!important;
     box-shadow:0 0 0 3px rgba(255,125,125,.15),0 0 18px rgba(255,125,125,.35)
-  }
-  .tex{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    pointer-events:none;
-    z-index:0;
   }
   .playerMark{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -431,8 +425,8 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const SAVE_KEY = 'oneDmc_saves_v12';
-  const GLOBAL_KEY = 'oneDmc_global_v12';
+  const SAVE_KEY = 'oneDmc_saves_v13';
+  const GLOBAL_KEY = 'oneDmc_global_v13';
   const DIM = { OVERWORLD:'overworld', NETHER:'nether' };
   const PASSABLE = new Set(['empty','water','lava','fire','nether_portal']);
 
@@ -551,26 +545,32 @@
     'obsidian','netherrack','soul_sand','ancient_debris','bucket','water_bucket','lava_bucket','flint_and_steel'
   ]);
 
-  const TEXTURE_DIR = 'textures/';
+  const TEXTURE_DIRS = ['textures/', './textures/', '../textures/'];
   const TEXTURE_EXTS = ['png', 'webp', 'jpg', 'jpeg'];
   const TEXTURE_MAP = Object.create(null);
   const TEXTURE_STATE = Object.create(null);
 
-  function requestTexture(id){
-    if (!id || id === 'empty') return;
-    if (TEXTURE_STATE[id] === 'loading' || TEXTURE_STATE[id] === 'loaded' || TEXTURE_STATE[id] === 'missing') return;
-    TEXTURE_STATE[id] = 'loading';
-
+  function textureCandidatesFor(id){
     const names = [...new Set([id, BLOCKS[id]?.name].filter(Boolean))];
-    const candidates = [];
-    for (const name of names){
-      for (const ext of TEXTURE_EXTS){
-        candidates.push(`${TEXTURE_DIR}${name}.${ext}`);
-        candidates.push(`./${TEXTURE_DIR}${name}.${ext}`);
+    const out = [];
+    for (const dir of TEXTURE_DIRS){
+      for (const name of names){
+        for (const ext of TEXTURE_EXTS){
+          out.push(new URL(encodeURI(`${dir}${name}.${ext}`), document.baseURI).href);
+        }
       }
     }
+    return out;
+  }
 
+  function requestTexture(id){
+    if (!id || id === 'empty') return;
+    if (TEXTURE_STATE[id] === 'loading' || TEXTURE_STATE[id] === 'loaded') return;
+    TEXTURE_STATE[id] = 'loading';
+
+    const candidates = textureCandidatesFor(id);
     let i = 0;
+
     const tryNext = () => {
       if (i >= candidates.length){
         TEXTURE_STATE[id] = 'missing';
@@ -591,6 +591,13 @@
     };
 
     tryNext();
+  }
+
+  function preloadTextures(){
+    for (const id of Object.keys(BLOCKS)){
+      if (id === 'empty') continue;
+      requestTexture(id);
+    }
   }
 
   function toolOutId(prefix,suffix){ return prefix==='wood' ? `wooden_${suffix}` : `${prefix}_${suffix}`; }
@@ -714,7 +721,7 @@
   const DIM_POOLS = {
     [DIM.OVERWORLD]: {
       soil: [['empty',2], ['grass',1], ['dirt',0.5], ['sand',0.5]],
-      stone: [['stone',30], ['coal_ore',20], ['iron_ore',10], ['gold_ore',5], ['diamond_ore',1]],
+      stone: [['stone',8], ['coal_ore',1], ['iron_ore',0.7], ['gold_ore',0.2], ['diamond_ore',0.1]],
       wood:  [['empty',2], ['wood',2], ['leaf',1]],
       liquid:[['empty',2], ['water',0.4], ['lava',0.1]]
     },
@@ -724,7 +731,7 @@
     }
   };
   const DIM_CAT = {
-    [DIM.OVERWORLD]: [['soil',1.15], ['stone',1.0], ['wood',0.95], ['liquid',0.35]],
+    [DIM.OVERWORLD]: [['soil',1.2], ['stone',0.8], ['wood',0.95], ['liquid',0.35]],
     [DIM.NETHER]: [['nether',1.55], ['liquid',0.22]]
   };
 
@@ -1171,6 +1178,7 @@
       state.waterDamageAcc = 0;
     }
   }
+
   function updateCorpses(dt){
     const w = world();
     const p = currentPos();
@@ -1189,6 +1197,7 @@
       }
     }
   }
+
   function updateTimedBlocks(dt){
     for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
       const w = worlds[dim];
@@ -1209,6 +1218,51 @@
       }
     }
   }
+
+  function updateLiquidFlow(){
+    for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
+      const w = worlds[dim];
+      const entries = [...w.mods.entries()];
+      const fluids = new Map();
+      for(const [k,b] of entries){
+        if(b === 'water' || b === 'lava') fluids.set(k,b);
+      }
+      const candidate = new Set();
+
+      const add = (x,y) => candidate.add(`${x},${y}`);
+
+      for(const [k,b] of fluids){
+        const [x,y] = k.split(',').map(Number);
+        add(x+1,y); add(x-1,y); add(x,y+1); add(x,y-1);
+        add(x,y);
+      }
+
+      const toFill = [];
+      for(const key of candidate){
+        const [x,y] = key.split(',').map(Number);
+        if(getBlockAt(dim,x,y) !== 'empty') continue;
+
+        const left = getBlockAt(dim,x-1,y);
+        const right = getBlockAt(dim,x+1,y);
+        const up = getBlockAt(dim,x,y-1);
+        const down = getBlockAt(dim,x,y+1);
+
+        if(left === right && (left === 'water' || left === 'lava')){
+          toFill.push([x,y,left]);
+          continue;
+        }
+        if(up === down && (up === 'water' || up === 'lava')){
+          toFill.push([x,y,up]);
+          continue;
+        }
+      }
+
+      for(const [x,y,b] of toFill){
+        setBlockAt(dim,x,y,b);
+      }
+    }
+  }
+
   function explosionDamageAt(px,py,cx,cy){
     const dist = Math.max(Math.abs(px-cx), Math.abs(py-cy));
     if(dist===0) return 10;
@@ -1255,6 +1309,7 @@
       }
     }
   }
+
   function updateMobs(dt){
     const w = world();
     const p = currentPos();
@@ -2282,18 +2337,16 @@
       const block = getBlockAt(state.dim,x,y);
       const cell = document.createElement('div');
       cell.className = 'cell ' + block;
-      cell.innerHTML = '';
+      cell.style.backgroundImage = '';
 
       if(TEXTURE_STATE[block] === undefined) requestTexture(block);
 
       const tex = TEXTURE_MAP[block];
       if(tex){
-        const img = document.createElement('img');
-        img.className = 'tex';
-        img.src = tex;
-        img.alt = '';
-        cell.appendChild(img);
+        cell.style.backgroundImage = `url("${tex}")`;
+        cell.style.color = 'transparent';
       }else{
+        cell.style.color = '';
         if(block === 'fire'){
           cell.textContent = ((Math.floor((w.fire.get(`${x},${y}`) || 0) * 8) % 2 === 0) ? '🔥' : '✦');
         }else if(block === 'tnt'){
@@ -2649,6 +2702,7 @@
   function init(){
     buildSpawnArea();
     ensureSpawnResources();
+    preloadTextures();
     updateLayout();
     updateTheme();
     if(saves.length > 0){ startFreshWorld(); openWorldListPanel(); }
@@ -2673,6 +2727,7 @@
     updateMobs(dt);
     updateCorpses(dt);
     updateTimedBlocks(dt);
+    updateLiquidFlow();
     updateHeatAndLiquids(dt);
     updateBreath(dt);
     updatePlayerHealth(dt);
