@@ -65,7 +65,6 @@
     word-break:break-word
   }
   .dirStrong{color:var(--accent);font-weight:900;font-size:14px}
-
   #line{
     display:flex;align-items:center;gap:var(--gap);width:max-content;padding:8px 6px;z-index:1
   }
@@ -494,8 +493,8 @@
 window.ONE_D_MINECRAFT_TEXTURES = {
   stone: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABEElEQVQ4EW2TsQ6DMAxEUylbGNgY+Gi+koGNAea2z/RFLsJSY+dsny8JfS3L8i7J9n0v53kG0lqL+DiOMgxDx1J5qTRgNNmA14jdb9tWJLO22kzCpArcSzZNk2F4SIKAYJ7nAFE0jmPBgxNjKiV2AHFVOgUmxNxDIpEEkAeBU5wY6G+xaF3XQDwSHkN1KIjdd8lTaPJYKuElIJWYoX+XyC1T5CRIbJDE4zm0OgUARlTgsawogNsCWf8OLH5qfsLkqsjmfZWrVHDMc4uD5bj6cXgx+LsamsyT4+dx+yVShFlIgZPEUJUvmnzNjAA2XXTXCgYJas1ztPgOnibZ7GT3+Pxq7Pt/gU02J0GS78SBkn8AQafbCMsFa2IAAAAASUVORK5CYII=",
   wood: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABVElEQVQ4EW2SsUpDQRBFxwV5RVSCT7FJYiMoNjZiZav/oN/hP/kPsRVsRNBCFKxebIJGgtHiYaGeDXcYF2+xuzM7M3fm7i6cnR58P4ymdrTfs9H4w8DlbWMnx7t/7MO9gfU3luzi+tljX6aflnLG71JVleEQSlt+dhFxzgVe397t6q7B/hdrqyvZD3uJRFtgvdvxOxKemonb9fJiPkMkKC93IAZdxsCtQS23bW/WttPvGpoBSHMBOXFQWQUnsy9Pxh9tXaSbx7HOvtMyglK4bVsfD7tE7gBnbFt6wBoV1ytJE/ISwZqJeWMCAUCJnCUeZ+AaaO65e76WxaQBpOfD+xzkI2hevDASxI8UymLy5wIaQc64M5Y0QSd+KFDHKb4zLJpRO8FRA30wCekaxC5gpBgsPKMgVmx1lWJAfDbOtEwhiUciRLE7F5FLEDuJjNyVH4nRfgAjyKEGoTkHggAAAABJRU5ErkJggg==",
-  plank: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABeUlEQVQ4EXWTwUoDQQyGUzqC26osq6JFEKknYU8ePPgOQu8ePPpCPowvUxFBVlHLorYrFKn9Mv3LKDWX2SR/MvP/ybZub65mzXRi2VrHOlnb/tqk+f43fnf/YIECimnSTM2qx1fL8g3Lu+seJ08T8hhYrKpHjgu6XYnewc6yIaDUaCp8Ly/MX8CNT6PYfb+I3fGfR2Ov3Su6fuLzncb5Dv2jQytP2jasXuy4t+vgcnFtGiOUUqnHX3Z+WphTMOsYT3p7/zASPJWzqT9tOC/Ex6ApqlkedQsAa4tFnowv9iIa0FgmIamRta4H5QxHXNEh1UBA5fFTTIs90PxTjttbm6pdeYJlSr4HcF9yW8xZeqhauugkDsUQb4+CEEz54UtAfSuPNtU8+EuDVXtAIfzFG1+7wHe4vDjzHaCjtOjP+WFw1G7gZ4tdgb+wAa56poQBrBjLpFESk9D8N5iLmO4CYOZNDJHYVEwxdiY110AzFjdxFlB7QVwY5X4ABEH/QgOmtKYAAAAASUVORK5CYII=",
-  crafting_table: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAACI0lEQVQ4EV2TT0iTcRjHvy4DN0tkmjk8aYcpdYooaYSXLkp17FCnEOoQBF0WUVBRGQRRpwq61FWSRKJDSKeKgnSHjLZiLfvDzNwYk70TxOr9PO9+tvmF35/n7/s839/zNsU6t/y9e2FY4c0RRcKbBJLXnirRHVG6vGJyf1uLXi14unnxkMlsXnVNJy5PKIRAcHXVU6G8rLmPOZ0a3WcB2ADB584MmZ1AVr5UNJsl4EYSVqynU7H2aBDg/VHBXyQsVYJq+BDABzSzvZ5Nc6g7GrFzoejpV7Gi75WqybkviyZ/ev/NZLYDQwN2twQHEzuVzf/Wjtg2U+6yXfrxeclu2MHJ2ZxunB3R+dvP1NvX5Ws+BBzQEyVdGntsieCChJRvy5fRAYJBQwsQ0t7aovzqmp04IDvADbh1b9yplE/dt7u18OZdTtujrabI/1zSRg6eTM+Y/crpEWUyGfN7O7H4P8Hxw3tNGJ+eC16hR+po27rOgbObU23bv7tfD6ZqHNBfVyKpyeczGhi+as+JznFgfPjyw+tH1nM0zAE9ZrNZM8bjcRsS9+4oHR+c2EEDiUGPac37c/DCNzoOMoWyOaf892dG0KdGB3Us+UjEACNxcE+vZXT/Qp//rGDjHIRrs0IV8DL18muQwJVYP+Po4ACgB+i4T945ajKbVUC/Ja2YA70x7/Uc4Oh0+NWjORRqErMOmH/ATNDz/LIn7Pwr2NA7H/yw/QPxTBseyzmBKAAAAABJRU5ErkJggg==",
+  plank: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABeUlEQVQ4EXWTwUoDQQyGUzqC26osq6JFEKknYU8ePPgOQu8ePPpCPowvUxFBVlHLorYrFKn9Mv3LKDWX2SR/MvP/ybZub65mzXRi2VrHOlnb/tqk+f43fnf/YIECimnSTM2qx1fL8g3Lu+seJ08T8hhYrKpHjgu6XYnewc6yIaDUaCp8Ly/MX8CNT6PYfb+I3fGfR2Ov3Su6fuLzncb5Dv2jQytP2jasXuy4t+vgcnFtGiOUUqnHX3Z+WphTMOsYT3p7/zASPJWzqT9tOC/Ex6ApqlkedQsAa4tFnowv9iIa0FgmIamRta4H5QxHXNEh1UBA5fFTTIs90PxTjttbm6pdeYJlSr4HcF9yW8xZeqhauugkDsUQb4+CEEz54UtAfSuPNtU8+EuDVXtAIfzFG1+7wHe4vDjzHaCjtOjP+WFw1G7gZ4tdgb+wAa56poQBrBjLpFESk9D8N5iLmO4CYOZNDJHYVEwxdiY110AzFjdxFlB7QVwY5X4ABEH/QgOmtKYAAAAASUVORK5CYII=",
+  crafting_table: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAACI0lEQVQ4EV2TT0iTcRjHvy4DN0tkmjk8aYcpdYooaYSXLkp17FCnEOoQBF0WUVBRGQRRpwq61FWSRKJDSKeKgnSHjLZiLfvDzNwYk70TxOr9PO9+tvmF35/n7/s839/zNsU6t/y9e2FY4c0RRcKbBJLXnirRHVG6vGJyf1uLXi14unnxkMlsXnVNJy5PKIRAcHXVU6G8rLmPOZ0a3WcB2ADB584MmZ1AVr5UNJsl4EYSVqynU7H2aBDg/VHBXyQsVYJq+BDABzSzvZ5Nc6g7GrFzoejpV7Gi75WqybkviyZ/ev/NZLYDQwN2twQHEzuVzf/Wjtg2U+6yXfrxeclu2MHJ2ZxunB3R+dvP1NvX5Ws+BBzQEyVdGntsieCChJRvy5fRAYJBQwsQ0t7aovzqmp04IDvADbh1b9yplE/dt7u18OZdTtujrabI/1zSRg6eTM+Y/crpEWUyGfN7O7H4P8Hxw3tNGJ+eC16hR+po27rOgbObU23bv7tfD6ZqHNBfVyKpyeczGhi+as+JznFgfPjyw+tH1nM0zAE9ZrNZM8bjcRsS9+4oHR+c2EEDiUGPac37c/DCNzoOMoWyOaf892dG0KdGB3Us+UjEACNxcE+vZXT/Qp//rGDjHIRrs0IV8DL18muQwJVYP+Po4ACgB+i4T945ajKbVUC/Ja2YA70x7/Uc4Oh0+NWjORRqErMOmH/ATNDz/LIn7Pwr2NA7H/yw/QPxTBseyzmBKAAAAABJRU5ErkJggg==",
   furnace: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABqklEQVQ4EY2ST0sCYRDGx/AgaCqYKJueBEO7hgf1C9Rh6VNGHyDsJBGZB+lmJQieNEFMUHTBW+1vcrY1PDSw78z7zDvPzr/Itet+SUg+Fws5yWQChLsJuN3tTRRn3nH0TSqVkjPfWq1Wgo0+q1TUZ1h+55tOJrJer+UIRs83CHB2RMViMSBJJpOKg+E3YqdQUOIoqcSPj4WHm81Gnjsd+ZhO1fn3OPUJLq+ugowwtARYkftWS97e39U+dCyXS4UbzaZmTfZaAuh4PN4LTqfTEv6MkB9YqWBagjlNn1erZgaa9P9mR/mRZqPxRUqw5nI5DYjFYkFg2Nhut3qdzWYy9ftEv7QHoDQQkHExFbpsNk227psmhgy0BNd1ZT6fSzabBf+X0LPbm5ufDLggaNIn1dFotEdUKpUCH288z9Ot1BK4xONxobaXXk863a7YyIyFiTTrdbmo1YJeaQk8oH6+h3ZbHp+eLGZPQ3jn7wnry3qXy2X1H3HSPCQcHN4BbBPeEMwPEV0kRmgkFmgBpsP4cDiURCLx24PBYCCv/b7YAlHbIWF1WSjmz4iRb6x83a5MH0URAAAAAElFTkSuQmCC",
   coal_ore: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAABwUlEQVQ4EV2TMWvCUBDHT8mgRNqUtkRwKQQyuji4ObqKo5/Gj+C3cBUn90ChDi6O0kChWJQikWKIFIr1d+UeoQcv7+Xd/e/+98+lMplMLlKy4/EoeZ7rje/7ej6dTtJoNNxdKVw8ABggA7CnaerioijS836/F5KxuAPjGdgcVAK8XC7lIbyTn++/PM1mU8IwlNlsJrVaTRNQqIp7t9spRcBcrtdrB75/rOv7fD7XTMPhUHq9nlaHQZUH1ZIk0QDe+/2+RE+xnM9ned18SFEU0u12HYhACrEq4/H4EgSBgk1AHHaHY7vdqh+mGExZrVZLPCoSbGCC6Jd7jGTY80si+ddZ/Jtr/1d26AFGRVytVgoCbOIR3G63nViA0reNBLd1vTOGHjQwKhmYINRHTPtc7DDDjB27zgFJ6BOhAAGO49i1YkUUfX3YjJDUYziw/0FWGWYmInHlNhHSQwwMHTBomtqAocluVfEPBgON5aGDZJN3yN51HtBiOp3q14EZfnyIaANlk+uhJlnpn4Asy/TMXZn64bNwPirb1LqfCQALuthisdBJZHTRA7Ods/uMvFivnK3n0WjkGBDc6XR0cCyGHfsF3BomDcgAgF4AAAAASUVORK5CYII=",
   iron_ore: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAEKADAAQAAAABAAAAEAAAAAA0VXHyAAAB4ElEQVQ4EU2Ty0rDUBCGxxq0mkhTFFpawSpovGxc68aFIL6Nb9Incd03cGtXlSDoEYzahbTFRkWEer6JEzqQ5Jy5/v/MZKHb7c7G47HMS57neg3DUDhPp1OJomjeRdrttt4DCzZHtI1GQ41xHAsPPt9vfamvLal+9PHjdUXyChqCN+RJLvZq0one9Y4+TVPJskzv1eYxKklaO2JnEAYoCcZwsL0pbqEpoa9oNIBfSngo/UlR0HQBjnH7RJzXOPerFS0INAjJkfRlIG66rmd6ogh4IdYL0JzuFWjQr9Yb8jkayt3js3x5BJEUdJNWzaONRRHgiNAwiQs04gOgRHDPIxtPqkqLgsv/PhTVHkADA01DdGR+TFBCcMQHakZPDf5VYZ48w+FQJ8AkcLIJ2AhtSrXZa9lgkuoeAB1D0trXxFcXR/pV6L56c/9MOrO3ckpWnW9AZQQn57+XnUAbd32bKQrbQBc3lZLRIQYJbOswID3nG+ky5Z0kSTkdo8I2MnbuIC+bCG+qreQDnTsV2cLFj3tdYV2043MtwkjT/EGyfEsqZLEGYWXWbKMhgpptKTtBMPZlj0IXSaH4S5rd+Go/fk12tQovHLAbf6jJXHJ89GfCiYxUIwhhRDyIobGz6bn/AfP6LK5JqB8BAAAAAElFTkSuQmCC",
@@ -588,7 +587,11 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   function compactText(s){
     return normText(s).toLowerCase().replace(/[\s_\-./、・]/g,'').replace(/[()（）【】\[\]{}]/g,'');
   }
-  function displayName(id){ return id ? (BLOCKS[id]?.name || id) : 'なし'; }
+  function displayName(id, context='default'){
+    if(!id) return 'なし';
+    if(context === 'fuel' && id === 'wood') return '木材';
+    return BLOCKS[id]?.name || id;
+  }
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 
@@ -720,9 +723,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const candidates = textureCandidatesFor(id);
     TEXTURE_CACHE[id] = candidates.length ? candidates[0] : null;
   }
-  function preloadTextures(){
-    for(const id of Object.keys(BLOCKS)) if(id !== 'empty') requestTexture(id);
-  }
+  function preloadTextures(){ for(const id of Object.keys(BLOCKS)) if(id !== 'empty') requestTexture(id); }
 
   function toolOutId(prefix,suffix){ return prefix === 'wood' ? `wooden_${suffix}` : `${prefix}_${suffix}`; }
 
@@ -1223,9 +1224,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const p = currentPos();
     return activeAxis() === 'x' ? {x:p.x + state.facing, y:p.y} : {x:p.x, y:p.y + state.facing};
   }
-  function isNight(){
-    return (Math.floor(state.gameTime) % 1440) >= 720;
-  }
+  function isNight(){ return (Math.floor(state.gameTime) % 1440) >= 720; }
   function timeText(){
     const t = Math.floor(state.gameTime) % 1440;
     const night = t >= 720;
@@ -1300,10 +1299,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     return spawned;
   }
 
-  function currentSaveSlot(){
-    if(!activeSaveId) return null;
-    return saves.find(s => s.id === activeSaveId) || null;
-  }
+  function currentSaveSlot(){ if(!activeSaveId) return null; return saves.find(s => s.id === activeSaveId) || null; }
 
   function respawnPlayer(){
     state.pos[DIM.OVERWORLD] = {x:0,y:0};
@@ -1400,6 +1396,27 @@ window.ONE_D_MINECRAFT_TEXTURES = {
           const [x,y] = k.split(',').map(Number);
           explodeTNT(dim,x,y,3);
         }else w.tnt.set(k, info);
+      }
+    }
+  }
+
+  function updateFurnaces(dt){
+    for(const dim of [DIM.OVERWORLD, DIM.NETHER]){
+      const w = worlds[dim];
+      for(const [k,f] of [...w.furnace.entries()]){
+        if(!f || !f.smelt) continue;
+        f.smelt.remaining -= dt;
+        if(f.smelt.remaining <= 0){
+          const outItem = f.smelt.outItem;
+          const outCount = f.smelt.outCount || 1;
+          if(!f.output) f.output = { item: outItem, count:0 };
+          if(f.output.item !== outItem){
+            f.smelt = null;
+            continue;
+          }
+          f.output.count += outCount;
+          f.smelt = null;
+        }
       }
     }
   }
@@ -1767,8 +1784,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 
   function getFurnaceState(w,x,y){
     const k = `${x},${y}`;
-    if(!w.furnace.has(k)) w.furnace.set(k, { input:null, fuel:null, output:null });
-    return w.furnace.get(k);
+    if(!w.furnace.has(k)) w.furnace.set(k, { input:null, fuel:null, output:null, smelt:null });
+    const f = w.furnace.get(k);
+    if(!('smelt' in f)) f.smelt = null;
+    return f;
   }
   function refreshFurnaceUI(){
     const visible = furnaceEnabled();
@@ -1791,9 +1810,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     fOutCount.textContent = f.output ? f.output.count : 0;
     paint(fInputItem,f.input); paint(fFuelItem,f.fuel); paint(fOutItem,f.output);
     const inName = f.input ? displayName(f.input.item) : 'なし';
-    const fuelName = f.fuel ? displayName(f.fuel.item) : 'なし';
+    const fuelName = f.fuel ? displayName(f.fuel.item, 'fuel') : 'なし';
     const outName = f.output ? displayName(f.output.item) : 'なし';
-    furnaceInfo.textContent = `入力: ${inName} / 燃料: ${fuelName} / 出力: ${outName}`;
+    const smeltText = f.smelt ? ` / 精錬中 ${Math.max(0, f.smelt.remaining).toFixed(1)}秒` : '';
+    furnaceInfo.textContent = `入力: ${inName} / 燃料: ${fuelName} / 出力: ${outName}${smeltText}`;
   }
 
   function refreshCommandVisibility(){
@@ -2470,18 +2490,24 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     if(block === 'stone'){
       if(type === 'none') return 1/16;
       if(!isPickLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
     if(block === 'cobblestone'){
       if(type === 'none') return 1/16;
       if(isShovelLike(item)) return 1/16;
       if(!isPickLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
     if(block === 'gravel'){
       if(type === 'none') return 1/16;
       if(!isShovelLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
 
     const rule = mineRule(block);
@@ -2510,7 +2536,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     if(block === 'empty') return { ok:false, mined:false };
     if(block === 'nether_portal') return { ok:false, mined:false, msg:'ネザーゲートブロックはTNTでしか壊せない。' };
     if(block === 'water' || block === 'lava') return { ok:false, mined:false, msg:'液体は掘れない。' };
-    if(block === 'fire'){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'炎を消した。' }; }
+    if(block === 'fire'){
+      setBlockAt(dim,x,y,'empty');
+      return { ok:true, mined:true, msg:'炎を消した。' };
+    }
 
     if((block === 'stone' || block === 'cobblestone') && toolTypeOf(tool) === 'none'){
       if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
@@ -2527,27 +2556,32 @@ window.ONE_D_MINECRAFT_TEXTURES = {
       return { ok:true, mined:true, drop:'tnt', msg:'TNTを手に入れた。' };
     }
 
-    if(block === 'obsidian' && !forceAll){
-      const chance = miningChance(block,tool,inWater);
-      if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
-      if(Math.random() > chance) return { ok:false, mined:false, msg:'硬すぎる。' };
-      setBlockAt(dim,x,y,'empty');
-      addItem('obsidian',1);
-      return { ok:true, mined:true, drop:'obsidian', msg:'黒曜石を手に入れた。' };
-    }
-
     const rule = mineRule(block);
-    if(!rule){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'壊した。' }; }
+    const tier = toolTierOf(tool);
+    const enoughTier = !rule || !rule.minTier || tier >= rule.minTier;
+    const chance = miningChance(block, tool, inWater);
 
-    const chance = miningChance(block,tool,inWater);
     if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
     if(Math.random() > chance) return { ok:false, mined:false, msg:'空振りした。' };
 
     setBlockAt(dim,x,y,'empty');
-    const dropItem = rule.drop || block;
-    if(dropItem && block !== 'water' && block !== 'lava' && block !== 'fire') addItem(dropItem,1);
-    if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
-    return { ok:true, mined:true, drop:dropItem, msg:`${displayName(dropItem || block)} を手に入れた。` };
+
+    if(enoughTier && rule && rule.drop && block !== 'water' && block !== 'lava' && block !== 'fire'){
+      addItem(rule.drop, 1);
+      if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
+      return { ok:true, mined:true, drop:rule.drop, msg:`${displayName(rule.drop)} を手に入れた。` };
+    }
+
+    if(rule && rule.minTier && !enoughTier){
+      return { ok:true, mined:true, drop:null, msg:`${displayName(block)} を壊した。` };
+    }
+
+    if(rule && rule.drop && block !== 'water' && block !== 'lava' && block !== 'fire'){
+      addItem(rule.drop, 1);
+      return { ok:true, mined:true, drop:rule.drop, msg:`${displayName(rule.drop)} を手に入れた。` };
+    }
+
+    return { ok:true, mined:true, msg:`${displayName(block)} を壊した。` };
   }
 
   function attackEnemy(m){
@@ -2795,6 +2829,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const p = currentPos();
     const f = getFurnaceState(world(),p.x,p.y);
     if(slotName === 'output'){ collectOutput(); return; }
+    if(f.smelt){
+      setMsg('精錬中だ。');
+      return;
+    }
     if(f[slotName]){
       const item = f[slotName].item;
       f[slotName].count -= 1;
@@ -2828,24 +2866,29 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     if(!furnaceEnabled()){ setMsg('かまどの前で使ってね。'); return; }
     const p = currentPos();
     const f = getFurnaceState(world(),p.x,p.y);
+    if(f.smelt){ setMsg('すでに精錬中だ。'); return; }
     if(!f.input){ setMsg('物を入れるところが空。'); return; }
     if(!f.fuel){ setMsg('燃料がない。'); return; }
+
     const inputItem = f.input.item;
     const outItem = { cobblestone:'stone', raw_iron:'iron_ingot', raw_gold:'gold_ingot', ancient_debris:'ancient_debris' }[inputItem];
     if(!outItem){ setMsg('それは精錬できない。'); return; }
+
     const chance = fuelChance(f.fuel.item);
     if(chance <= 0){ setMsg('その燃料は使えない。'); return; }
-    if(f.output && f.output.item !== outItem){ setMsg('出力欄に別のものが入っている。'); return; }
+
+    if(f.output && f.output.item !== outItem){
+      setMsg('出力欄に別のものが入っている。');
+      return;
+    }
+
     f.fuel.count -= 1;
     if(f.fuel.count <= 0) f.fuel = null;
-    const success = Math.random() < chance;
-    if(success){
-      if(!f.output) f.output = { item:outItem, count:0 };
-      f.output.count += 1;
-      f.input.count -= 1;
-      if(f.input.count <= 0) f.input = null;
-      setMsg(`${displayName(outItem)} ができた。`);
-    }else setMsg('精錬に失敗した。');
+    f.input.count -= 1;
+    if(f.input.count <= 0) f.input = null;
+
+    f.smelt = { outItem, outCount:1, remaining:5, fuelChance: chance };
+    setMsg('精錬を開始した。5秒待ってね。');
     refreshAllMenus(); render();
   }
 
@@ -3032,11 +3075,14 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     updateTheme();
 
     if(saves.length > 0){
-      const first = saves.find(s => !s.locked) || saves[0];
-      if(first){
-        applySnapshot(first.data);
-        activeSaveId = first.id;
+      const firstPlayable = saves.find(s => !s.locked);
+      if(firstPlayable){
+        applySnapshot(firstPlayable.data);
+        activeSaveId = firstPlayable.id;
         hasWorld = true;
+      }else{
+        hasWorld = false;
+        activeSaveId = null;
       }
       openWorldListPanel();
     }else if(!globalState.firstLaunchDone){
@@ -3072,6 +3118,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
       updateMobs(dt);
       updateCorpses(dt);
       updateTimedBlocks(dt);
+      updateFurnaces(dt);
       updateLiquidFlow();
       updateHeatAndLiquids(dt);
       updateBreath(dt);
