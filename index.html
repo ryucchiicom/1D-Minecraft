@@ -391,7 +391,7 @@
               <div class="fSlotItem" id="fOutItem">空</div>
             </button>
           </div>
-          <button class="furnaceBtn" id="smeltBtn">精錬</button>
+          <button class="furnaceBtn" id="smeltBtn">錬成</button>
         </div>
       </div>
 
@@ -588,7 +588,11 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   function compactText(s){
     return normText(s).toLowerCase().replace(/[\s_\-./、・]/g,'').replace(/[()（）【】\[\]{}]/g,'');
   }
-  function displayName(id){ return id ? (BLOCKS[id]?.name || id) : 'なし'; }
+  function displayName(id, context = 'default'){
+    if(!id) return 'なし';
+    if(context === 'fuel' && id === 'wood') return '木材';
+    return BLOCKS[id]?.name || id;
+  }
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function fmtHalf(v){ const n = Math.round(v*2)/2; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 
@@ -765,7 +769,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     return {
       dim:w.dim, seed:w.seed, mods:serializeMap(w.mods), fire:serializeMap(w.fire),
       tnt:[...w.tnt.entries()].map(([k,v]) => [k, normalizeTntValue(v)]),
-      mobs:deep(w.mobs), corpses:serializeMap(w.corpses), furnace:serializeMap(w.furnace)
+      mobs:deep(w.mobs), corpses:serializeMap(w.corpses), furnace:[...w.furnace.entries()]
     };
   }
   function deserializeWorld(data, dim){
@@ -777,7 +781,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     w.tnt = new Map((Array.isArray(data.tnt)?data.tnt:[]).map(([k,v]) => [k, normalizeTntValue(v)]));
     w.mobs = Array.isArray(data.mobs) ? data.mobs.map(m => ({...m})) : [];
     w.corpses = deserializeMap(data.corpses);
-    w.furnace = deserializeMap(data.furnace);
+    w.furnace = new Map(Array.isArray(data.furnace) ? data.furnace : []);
     return w;
   }
 
@@ -803,7 +807,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     gameTime:0, nightSpawnAcc:0,
     portalAcc:0, portalRecentTravel:false, portalShake:0,
     now:0,
-    inventory:{}, infiniteItems:new Set(), heldItem:null, favoriteItems:[],
+    inventory:Object.create(null), infiniteItems:new Set(), heldItem:null, favoriteItems:[],
     keepInventory:false, cmdUnlocked:false,
     craftGridSize:2, craftGrid:Array(4).fill(null), inventorySearch:''
   };
@@ -1173,9 +1177,6 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   function isAxeLike(item){ return toolTypeOf(item)==='axe' || toolTypeOf(item)==='alltools'; }
   function isPickLike(item){ return toolTypeOf(item)==='pickaxe' || toolTypeOf(item)==='alltools'; }
   function isSwordLike(item){ return toolTypeOf(item)==='sword' || toolTypeOf(item)==='alltools'; }
-  function isSoftMineBlock(block){
-    return ['dirt','grass','sand','wood','leaf','plank','crafting_table','furnace','torch','soul_sand'].includes(block);
-  }
 
   function mineRule(block){
     const rules = {
@@ -1193,7 +1194,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     return rules[block] || null;
   }
 
-  function count(item){ return state.infiniteItems.has(item) ? Infinity : (state.inventory[item] || 0); }
+  function count(item){ return state.infiniteItems.has(item) ? Infinity : (Object.prototype.hasOwnProperty.call(state.inventory, item) ? state.inventory[item] : 0); }
   function hasItem(item){ return count(item) > 0; }
   function stackText(item){ const c = count(item); return `${displayName(item)} ×${c===Infinity ? '∞' : c}`; }
 
@@ -1205,16 +1206,20 @@ window.ONE_D_MINECRAFT_TEXTURES = {
   }
   function addItem(item,n=1){
     if(n===Infinity){
-      state.infiniteItems.add(item); state.inventory[item] = 1; normalizeHeld(); return;
+      state.infiniteItems.add(item);
+      state.inventory[item] = 1;
+      normalizeHeld();
+      return;
     }
     if(state.infiniteItems.has(item)) return;
-    state.inventory[item] = (state.inventory[item] || 0) + n;
+    const current = Number(state.inventory[item] || 0);
+    state.inventory[item] = current + n;
     if(state.inventory[item] <= 0) delete state.inventory[item];
     normalizeHeld();
   }
   function removeItem(item,n=1){
     if(state.infiniteItems.has(item)) return;
-    if(!state.inventory[item]) return;
+    if(!Object.prototype.hasOwnProperty.call(state.inventory, item)) return;
     state.inventory[item] -= n;
     if(state.inventory[item] <= 0) delete state.inventory[item];
     normalizeHeld();
@@ -1400,6 +1405,26 @@ window.ONE_D_MINECRAFT_TEXTURES = {
           const [x,y] = k.split(',').map(Number);
           explodeTNT(dim,x,y,3);
         }else w.tnt.set(k, info);
+      }
+      for(const [k,f] of [...w.furnace]){
+        if(f && f.pending){
+          f.pending.timer -= dt;
+          if(f.pending.timer <= 0){
+            if(f.pending.success){
+              if(!f.output || f.output.item === f.pending.outItem){
+                if(!f.output) f.output = { item:f.pending.outItem, count:0 };
+                f.output.count += 1;
+                f.pending = null;
+                setMsg(`${displayName(f.output.item)} ができた。`);
+              }else{
+                f.pending.timer = 0;
+              }
+            }else{
+              f.pending = null;
+              setMsg('錬成に失敗した。');
+            }
+          }
+        }
       }
     }
   }
@@ -1597,11 +1622,11 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 
   function refreshInventoryUI(){
     invList.innerHTML = '';
-    const items = ITEM_ORDER.filter(k => count(k) > 0);
+    const keys = [...new Set([...ITEM_ORDER, ...Object.keys(state.inventory)])].filter(k => count(k) > 0);
     const q = state.inventorySearch.trim().toLowerCase();
-    const ordered = [...state.favoriteItems.filter(id => count(id) > 0), ...items.filter(id => !state.favoriteItems.includes(id))];
+    const ordered = [...state.favoriteItems.filter(id => count(id) > 0), ...keys.filter(id => !state.favoriteItems.includes(id))];
     const filtered = ordered.filter(id => !q || displayName(id).toLowerCase().includes(q) || id.toLowerCase().includes(q));
-    if(!items.length){
+    if(!keys.length){
       const empty = document.createElement('div');
       empty.className = 'small'; empty.textContent = '所持品なし'; invList.appendChild(empty);
       heldText.textContent = '手持ち: なし'; return;
@@ -1767,8 +1792,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 
   function getFurnaceState(w,x,y){
     const k = `${x},${y}`;
-    if(!w.furnace.has(k)) w.furnace.set(k, { input:null, fuel:null, output:null });
-    return w.furnace.get(k);
+    if(!w.furnace.has(k)) w.furnace.set(k, { input:null, fuel:null, output:null, pending:null });
+    const f = w.furnace.get(k);
+    if(!('pending' in f)) f.pending = null;
+    return f;
   }
   function refreshFurnaceUI(){
     const visible = furnaceEnabled();
@@ -1791,9 +1818,12 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     fOutCount.textContent = f.output ? f.output.count : 0;
     paint(fInputItem,f.input); paint(fFuelItem,f.fuel); paint(fOutItem,f.output);
     const inName = f.input ? displayName(f.input.item) : 'なし';
-    const fuelName = f.fuel ? displayName(f.fuel.item) : 'なし';
+    const fuelName = f.fuel ? displayName(f.fuel.item, 'fuel') : 'なし';
     const outName = f.output ? displayName(f.output.item) : 'なし';
-    furnaceInfo.textContent = `入力: ${inName} / 燃料: ${fuelName} / 出力: ${outName}`;
+    const pendingText = f.pending ? ` / 錬成中: ${f.pending.success ? displayName(f.pending.outItem) : '失敗予定'} (${fmtHalf(Math.max(0, f.pending.timer))}s)` : '';
+    furnaceInfo.textContent = `入力: ${inName} / 燃料: ${fuelName} / 出力: ${outName}${pendingText}`;
+    smeltBtn.textContent = f.pending ? '錬成中' : '錬成';
+    smeltBtn.disabled = !!f.pending;
   }
 
   function refreshCommandVisibility(){
@@ -1854,7 +1884,9 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     state.soulSlow = data.soulSlow ?? 0; state.prevBlock = data.prevBlock ?? 'empty';
     state.gameTime = data.gameTime ?? 0; state.nightSpawnAcc = data.nightSpawnAcc ?? 0;
     state.portalAcc = data.portalAcc ?? 0; state.portalRecentTravel = !!data.portalRecentTravel; state.portalShake = data.portalShake ?? 0;
-    state.inventory = data.inventory || {}; state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
+    state.inventory = Object.create(null);
+    for(const [k,v] of Object.entries(data.inventory || {})) state.inventory[k] = v;
+    state.infiniteItems = new Set(data.infiniteItems || []); state.heldItem = data.heldItem || null;
     state.keepInventory = !!data.keepInventory; state.cmdUnlocked = !!data.cmdUnlocked;
     state.craftGridSize = data.craftGridSize || 2; state.craftGrid = data.craftGrid || Array(state.craftGridSize * state.craftGridSize).fill(null);
     state.inventorySearch = data.inventorySearch || ''; state.favoriteItems = data.favoriteItems || [];
@@ -2038,7 +2070,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     state.difficulty = difficulty;
     state.pos = { [DIM.OVERWORLD]:{x:0,y:0}, [DIM.NETHER]:{x:0,y:0} };
     state.facing = 1;
-    state.inventory = {}; state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
+    state.inventory = Object.create(null); state.infiniteItems = new Set(); state.heldItem = null; state.favoriteItems = [];
     state.hp = 10; state.breath = 10; state.regenAcc = 0; state.downedAcc = 0; state.attackCd = 0;
     state.fireAcc = 0; state.lavaAcc = 0; state.burnRemain = 0; state.burnAcc = 0; state.waterDamageAcc = 0;
     state.soulSlow = 0; state.prevBlock = 'empty'; state.gameTime = 0; state.nightSpawnAcc = 0;
@@ -2139,7 +2171,12 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     }
   }
   function updateMineButtonLabel(){ mineBtn.textContent = enemyAtTarget() ? '殴る' : '掘る'; }
-  function currentBlockPassable(block){ return PASSABLE.has(block); }
+
+  function snapshotInventoryAsObject(){
+    const out = Object.create(null);
+    for(const [k,v] of Object.entries(state.inventory)) out[k] = v;
+    return out;
+  }
 
   function killPlayer(){
     const w = world();
@@ -2148,7 +2185,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     const corpseItems = {};
     const loseAll = deathBlock === 'fire' || deathBlock === 'lava';
     if(loseAll){
-      state.inventory = {};
+      state.inventory = Object.create(null);
       state.infiniteItems = new Set();
     }else if(!state.keepInventory){
       for(const item of Object.keys(state.inventory)){
@@ -2450,8 +2487,8 @@ window.ONE_D_MINECRAFT_TEXTURES = {
 
   function miningChance(block, item, inWater){
     const mat = toolMaterialOf(item);
-    const tier = toolTierOf(item);
     const type = toolTypeOf(item);
+    const rule = mineRule(block);
 
     if(item === 'gold_alltools') return 1;
     if(type === 'alltools'){
@@ -2462,6 +2499,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
       if(mat === 'diamond') return 1;
       return 1/16;
     }
+
     if(block === 'tnt') return 1;
     if(block === 'nether_portal') return 0;
     if(block === 'water' || block === 'lava') return 0;
@@ -2470,32 +2508,43 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     if(block === 'stone'){
       if(type === 'none') return 1/16;
       if(!isPickLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
+
     if(block === 'cobblestone'){
       if(type === 'none') return 1/16;
       if(isShovelLike(item)) return 1/16;
       if(!isPickLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
+
     if(block === 'gravel'){
       if(type === 'none') return 1/16;
       if(!isShovelLike(item)) return 0;
-      return (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
     }
 
-    const rule = mineRule(block);
+    if(rule && rule.minTier){
+      if(!isPickLike(item)) return 0;
+      let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
+      if(inWater) chance *= 0.5;
+      return chance;
+    }
+
     if(!rule) return 1/16;
-    if(rule.tool === 'special') return 0;
 
-    const proper =
-      (rule.tool === 'shovel' && isShovelLike(item)) ||
-      (rule.tool === 'axe' && isAxeLike(item)) ||
-      (rule.tool === 'pickaxe' && isPickLike(item)) ||
-      (rule.tool === 'sword' && isSwordLike(item));
+    if(rule.tool === 'any') return 1;
+    if(rule.tool === 'shovel' && !isShovelLike(item)) return 1/16;
+    if(rule.tool === 'axe' && !isAxeLike(item)) return 1/16;
+    if(rule.tool === 'pickaxe' && !isPickLike(item)) return 1/16;
+    if(rule.tool === 'sword' && !isSwordLike(item)) return 1/16;
 
-    if(rule.tool !== 'any' && !proper) return isSoftMineBlock(block) ? 1/16 : 0;
-    if(rule.minTier && tier < rule.minTier) return 0;
     let chance = (mat === 'wood') ? 1/8 : (mat === 'stone') ? 1/4 : (mat === 'iron') ? 1/2 : (mat === 'gold') ? 1 : (mat === 'diamond') ? 1 : 1/16;
     if(inWater) chance *= 0.5;
     return chance;
@@ -2510,7 +2559,10 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     if(block === 'empty') return { ok:false, mined:false };
     if(block === 'nether_portal') return { ok:false, mined:false, msg:'ネザーゲートブロックはTNTでしか壊せない。' };
     if(block === 'water' || block === 'lava') return { ok:false, mined:false, msg:'液体は掘れない。' };
-    if(block === 'fire'){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'炎を消した。' }; }
+    if(block === 'fire'){
+      setBlockAt(dim,x,y,'empty');
+      return { ok:true, mined:true, msg:'炎を消した。' };
+    }
 
     if((block === 'stone' || block === 'cobblestone') && toolTypeOf(tool) === 'none'){
       if(Math.random() > 1/16) return { ok:false, mined:false, msg:'空振りした。' };
@@ -2527,27 +2579,32 @@ window.ONE_D_MINECRAFT_TEXTURES = {
       return { ok:true, mined:true, drop:'tnt', msg:'TNTを手に入れた。' };
     }
 
-    if(block === 'obsidian' && !forceAll){
-      const chance = miningChance(block,tool,inWater);
-      if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
-      if(Math.random() > chance) return { ok:false, mined:false, msg:'硬すぎる。' };
-      setBlockAt(dim,x,y,'empty');
-      addItem('obsidian',1);
-      return { ok:true, mined:true, drop:'obsidian', msg:'黒曜石を手に入れた。' };
-    }
-
     const rule = mineRule(block);
-    if(!rule){ setBlockAt(dim,x,y,'empty'); return { ok:true, mined:true, msg:'壊した。' }; }
+    const tier = toolTierOf(tool);
+    const enoughTier = !rule || !rule.minTier || tier >= rule.minTier;
+    const chance = miningChance(block, tool, inWater);
 
-    const chance = miningChance(block,tool,inWater);
     if(chance <= 0) return { ok:false, mined:false, msg:'掘れない。' };
     if(Math.random() > chance) return { ok:false, mined:false, msg:'空振りした。' };
 
     setBlockAt(dim,x,y,'empty');
-    const dropItem = rule.drop || block;
-    if(dropItem && block !== 'water' && block !== 'lava' && block !== 'fire') addItem(dropItem,1);
-    if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
-    return { ok:true, mined:true, drop:dropItem, msg:`${displayName(dropItem || block)} を手に入れた。` };
+
+    if(enoughTier && rule && rule.drop && block !== 'water' && block !== 'lava' && block !== 'fire'){
+      addItem(rule.drop, 1);
+      if(block === 'soul_sand') state.soulSlow = Math.max(state.soulSlow, 5);
+      return { ok:true, mined:true, drop:rule.drop, msg:`${displayName(rule.drop)} を手に入れた。` };
+    }
+
+    if(rule && rule.minTier && !enoughTier){
+      return { ok:true, mined:true, drop:null, msg:`${displayName(block)} を壊した。` };
+    }
+
+    if(rule && rule.drop && block !== 'water' && block !== 'lava' && block !== 'fire'){
+      addItem(rule.drop, 1);
+      return { ok:true, mined:true, drop:rule.drop, msg:`${displayName(rule.drop)} を手に入れた。` };
+    }
+
+    return { ok:true, mined:true, msg:`${displayName(block)} を壊した。` };
   }
 
   function attackEnemy(m){
@@ -2790,6 +2847,7 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     refreshAllMenus(); render();
     setMsg('できあがりを回収した。');
   }
+
   function furnaceTakeOrPut(slotName){
     if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     const p = currentPos();
@@ -2823,30 +2881,36 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     }
     refreshAllMenus(); render();
   }
+
   function smeltOnce(){
     if(!hasWorld){ setMsg('先にワールドを作ってね。'); return; }
     if(!furnaceEnabled()){ setMsg('かまどの前で使ってね。'); return; }
     const p = currentPos();
     const f = getFurnaceState(world(),p.x,p.y);
+    if(f.pending){
+      setMsg('錬成中。');
+      return;
+    }
     if(!f.input){ setMsg('物を入れるところが空。'); return; }
     if(!f.fuel){ setMsg('燃料がない。'); return; }
+
     const inputItem = f.input.item;
     const outItem = { cobblestone:'stone', raw_iron:'iron_ingot', raw_gold:'gold_ingot', ancient_debris:'ancient_debris' }[inputItem];
     if(!outItem){ setMsg('それは精錬できない。'); return; }
+
     const chance = fuelChance(f.fuel.item);
     if(chance <= 0){ setMsg('その燃料は使えない。'); return; }
-    if(f.output && f.output.item !== outItem){ setMsg('出力欄に別のものが入っている。'); return; }
+
+    const success = Math.random() < chance;
+
     f.fuel.count -= 1;
     if(f.fuel.count <= 0) f.fuel = null;
-    const success = Math.random() < chance;
-    if(success){
-      if(!f.output) f.output = { item:outItem, count:0 };
-      f.output.count += 1;
-      f.input.count -= 1;
-      if(f.input.count <= 0) f.input = null;
-      setMsg(`${displayName(outItem)} ができた。`);
-    }else setMsg('精錬に失敗した。');
+    f.input.count -= 1;
+    if(f.input.count <= 0) f.input = null;
+
+    f.pending = { outItem, success, timer:5 };
     refreshAllMenus(); render();
+    setMsg('錬成を開始した。');
   }
 
   function textureForBlock(block){
@@ -3032,11 +3096,14 @@ window.ONE_D_MINECRAFT_TEXTURES = {
     updateTheme();
 
     if(saves.length > 0){
-      const first = saves.find(s => !s.locked) || saves[0];
-      if(first){
-        applySnapshot(first.data);
-        activeSaveId = first.id;
+      const firstPlayable = saves.find(s => !s.locked);
+      if(firstPlayable){
+        applySnapshot(firstPlayable.data);
+        activeSaveId = firstPlayable.id;
         hasWorld = true;
+      }else{
+        hasWorld = false;
+        activeSaveId = null;
       }
       openWorldListPanel();
     }else if(!globalState.firstLaunchDone){
